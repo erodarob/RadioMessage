@@ -56,11 +56,11 @@ public:
     // Note: modified when message is decoded
     APRSConfig config;
 
-    APRSData() : config({"",
-                         "",
-                         "",
-                         '\0',
-                         '\0'}) {};
+    APRSData() : config(APRSConfig{"",
+                                   "",
+                                   "",
+                                   '\0',
+                                   '\0'}) {};
 
     // APRSData constructor
     // - cfg : the APRS config to use
