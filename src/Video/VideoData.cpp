@@ -42,9 +42,9 @@ uint16_t VideoData::decode(uint8_t *data, uint16_t sz)
     return sz;
 }
 
-uint16_t VideoData::toJSON(char *json, uint16_t sz, const char *streamName)
+uint16_t VideoData::toJSON(char *json, uint16_t sz, int deviceId)
 {
-    uint16_t result = (uint16_t)snprintf(json, sz, "{\"type\": \"VideoData\", \"name\":\"%s\", \"data\": {\"data\": [", streamName);
+    uint16_t result = (uint16_t)snprintf(json, sz, "{\"type\": \"VideoData\", \"deviceId\":%d, \"data\": {\"data\": [", deviceId);
 
     if (result >= sz)
     {
@@ -91,10 +91,14 @@ uint16_t VideoData::toJSON(char *json, uint16_t sz, const char *streamName)
     return 0;
 }
 
-uint16_t VideoData::fromJSON(char *json, uint16_t sz, char *streamName) //
+uint16_t VideoData::fromJSON(char *json, uint16_t sz, int &deviceId)
 {
-    if (!extractStr(json, sz, "\"name\":\"", '"', streamName))
+    char deviceIdStr[5] = {0};
+
+    if (!extractStr(json, sz, "\"deviceId\":", ',', deviceIdStr))
         return 0;
+
+    deviceId = atoi(deviceIdStr);
 
     char *dataStrPos = strstr(json, "{\"data\": [");
     int current = int(dataStrPos - json) + 10; // add 10 to move to the "["

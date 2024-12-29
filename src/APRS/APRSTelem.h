@@ -2,6 +2,7 @@
 #define APRSTELEM_H
 
 #include "APRSData.h"
+#include "../Types/PackedNum.h"
 
 class APRSTelem : public APRSData
 {
@@ -16,14 +17,14 @@ public:
 
     const int ALT_OFFSET = +1000; // range of -1000 to 35000 ft.
 
-    double lat = 0.0;                   // decimal latitude
-    double lng = 0.0;                   // decimal longitude
-    double alt = 0.0;                   // ft
-    double spd = 0.0;                   // knots
-    double hdg = 0.0;                   // degrees
-    double orient[3] = {0.0, 0.0, 0.0}; // euler angles in degrees
-    uint32_t stateFlags = 0x00000000;   // flight computer specific state flags (max 32 bits)
-                                        // maybe a bit much, but we can fit a lot of info here
+    double lat = 0.0;                            // decimal latitude
+    double lng = 0.0;                            // decimal longitude
+    double alt = 0.0;                            // ft
+    double spd = 0.0;                            // knots
+    double hdg = 0.0;                            // degrees
+    double orient[3] = {0.0, 0.0, 0.0};          // euler angles in degrees
+    PackedNum stateFlags = (uint32_t)0x00000000; // flight computer specific state flags (max 32 bits)
+                                                 // maybe a bit much, but we can fit a lot of info here
 
     APRSTelem() : APRSData() {};
 
@@ -40,14 +41,17 @@ public:
     // - orient[3] : the current XYZ orientation (degrees)
     // - stateFlags : various data representing the state of the rocket
     APRSTelem(APRSConfig config, double lat, double lng, double alt, double spd, double hdg, double orient[3], uint32_t stateFlags);
+    APRSTelem(APRSConfig config, double lat, double lng, double alt, double spd, double hdg, double orient[3], uint8_t *stateFlags, uint8_t *encoding, uint8_t length);
+
+    bool getStateFlags(uint8_t *flags);
 
     // encode the data stored in the ```Data``` object and place the result in ```data```
     uint16_t encode(uint8_t *data, uint16_t sz) override;
     // decode the data stored in ```data``` and place it in the ```Data``` object
     uint16_t decode(uint8_t *data, uint16_t sz) override;
 
-    uint16_t toJSON(char *json, uint16_t sz, const char *streamName = "") override;
-    uint16_t fromJSON(char *json, uint16_t sz, char *streamName) override;
+    uint16_t toJSON(char *json, uint16_t sz, int deviceId) override;
+    uint16_t fromJSON(char *json, uint16_t sz, int &deviceId) override;
 };
 
 #endif

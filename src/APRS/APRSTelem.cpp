@@ -12,6 +12,21 @@ APRSTelem::APRSTelem(APRSConfig config, double lat, double lng, double alt, doub
     this->orient[2] = orient[2];
 }
 
+APRSTelem::APRSTelem(APRSConfig config, double lat, double lng, double alt, double spd, double hdg, double orient[3], uint8_t *stateFlags, uint8_t *encoding, uint8_t length)
+    : APRSData(config), lat(lat), lng(lng), alt(alt), spd(spd), hdg(hdg), stateFlags(encoding, length)
+{
+    this->orient[0] = orient[0];
+    this->orient[1] = orient[1];
+    this->orient[2] = orient[2];
+
+    this->stateFlags.encode(stateFlags);
+}
+
+bool APRSTelem::getStateFlags(uint8_t *flags)
+{
+    return this->stateFlags.decode(flags);
+}
+
 uint16_t APRSTelem::encode(uint8_t *data, uint16_t sz)
 {
     uint16_t pos = 0;
@@ -61,7 +76,7 @@ uint16_t APRSTelem::encode(uint8_t *data, uint16_t sz)
         return 0; // error too small for state flags
 
     // max value is 4294967295, so we need 5 base 91 (or 8 hex) digits to represent it
-    numtoBase91(data, pos, this->stateFlags, 5);
+    numtoBase91(data, pos, this->stateFlags.get(), 5);
 
     return pos;
 }
@@ -120,14 +135,14 @@ uint16_t APRSTelem::decode(uint8_t *data, uint16_t sz)
         return 0; // error too small for state flags
 
     base91toNum(data, pos, decodedNum, 5);
-    this->stateFlags += decodedNum;
+    this->stateFlags.set(decodedNum);
 
     return pos;
 }
 
-uint16_t APRSTelem::toJSON(char *json, uint16_t sz, const char *streamName)
+uint16_t APRSTelem::toJSON(char *json, uint16_t sz, int deviceId)
 {
-    uint16_t result = (uint16_t)snprintf(json, sz, "{\"type\": \"APRSTelem\", \"name\":\"%s\", \"data\": {\"lat\": %.7lf, \"lng\": %.7lf, \"alt\": %lf, \"spd\": %lf, \"hdg\": %lf, \"orient\": [%lf, %lf, %lf], \"stateflags\": \"%#lx\"}}", streamName, this->lat, this->lng, this->alt, this->spd, this->hdg, this->orient[0], this->orient[1], this->orient[2], this->stateFlags);
+    uint16_t result = (uint16_t)snprintf(json, sz, "{\"type\": \"APRSTelem\", \"deviceId\":%d, \"data\": {\"lat\": %.7lf, \"lng\": %.7lf, \"alt\": %lf, \"spd\": %lf, \"hdg\": %lf, \"orient\": [%lf, %lf, %lf], \"stateFlags\": \"%#lx\"}}", deviceId, this->lat, this->lng, this->alt, this->spd, this->hdg, this->orient[0], this->orient[1], this->orient[2], this->stateFlags.get());
 
     if (result < sz)
     {
@@ -138,15 +153,16 @@ uint16_t APRSTelem::toJSON(char *json, uint16_t sz, const char *streamName)
     return 0;
 }
 
-uint16_t APRSTelem::fromJSON(char *json, uint16_t sz, char *streamName)
+uint16_t APRSTelem::fromJSON(char *json, uint16_t sz, int &deviceId)
 {
+    char deviceIdStr[5] = {0};
     char lat[14] = {0};
     char lng[14] = {0};
     char alt[14] = {0};
     char spd[14] = {0};
     char hdg[14] = {0};
     char sf[11] = {0};
-    if (!extractStr(json, sz, "\"name\":\"", '"', streamName))
+    if (!extractStr(json, sz, "\"deviceId\":", ',', deviceIdStr))
         return 0;
     if (!extractStr(json, sz, "\"lat\": ", ',', lat, 14))
         return 0;
@@ -161,12 +177,13 @@ uint16_t APRSTelem::fromJSON(char *json, uint16_t sz, char *streamName)
     if (!extractStr(json, sz, "\"stateflags\": \"", '"', sf, 11))
         return 0;
 
+    deviceId = atoi(deviceIdStr);
     this->lat = atof(lat);
     this->lng = atof(lng);
     this->alt = atof(alt);
     this->spd = atof(spd);
     this->hdg = atof(hdg);
-    this->stateFlags = strtol(sf, NULL, 16);
+    this->stateFlags.set(strtol(sf, NULL, 16));
 
     char *orientStrPos = strstr(json, "\"orient\": [");
     int orientPos = int(orientStrPos - json) + 11;

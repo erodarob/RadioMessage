@@ -97,9 +97,9 @@ GSData *GSData::fill(uint8_t *buf, uint16_t size)
     return this;
 }
 
-uint16_t GSData::toJSON(char *json, uint16_t sz, const char *streamName)
+uint16_t GSData::toJSON(char *json, uint16_t sz, int deviceId)
 {
-    uint16_t result = (uint16_t)snprintf(json, sz, "{\"type\": \"GSData\", \"name\":\"%s\", \"data\": {\"index\": %d, \"buf\": [", streamName, this->index);
+    uint16_t result = (uint16_t)snprintf(json, sz, "{\"type\": \"GSData\", \"deviceId\":%d, \"data\": {\"index\": %d, \"buf\": [", deviceId, this->index);
     if (result >= sz)
     {
         // output too large
@@ -145,15 +145,17 @@ uint16_t GSData::toJSON(char *json, uint16_t sz, const char *streamName)
     return 0;
 }
 
-uint16_t GSData::fromJSON(char *json, uint16_t sz, char *streamName)
+uint16_t GSData::fromJSON(char *json, uint16_t sz, int &deviceId)
 {
+    char deviceIdStr[5] = {0};
     char indexTxt[10] = {0};
 
-    if (!extractStr(json, sz, "\"name\":\"", '"', streamName))
+    if (!extractStr(json, sz, "\"deviceId\":", ',', deviceIdStr))
         return 0;
     if (!extractStr(json, sz, "\"index\": ", ',', indexTxt, 3))
         return 0;
 
+    deviceId = atoi(deviceIdStr);
     this->index = atoi(indexTxt);
 
     char *dataStrPos = strstr(json, "\"buf\": [");

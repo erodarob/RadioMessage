@@ -23,8 +23,8 @@ public:
     // decode the data stored in ```data``` and place it in the ```Data``` object, ```sz``` is the number of bytes from ```data``` to decode
     virtual uint16_t decode(uint8_t *data, uint16_t sz) = 0;
 
-    virtual uint16_t toJSON(char *json, uint16_t sz, const char *streamName = "") = 0;
-    virtual uint16_t fromJSON(char *json, uint16_t sz, char *streamName) = 0;
+    virtual uint16_t toJSON(char *json, uint16_t sz, int deviceId) = 0;
+    virtual uint16_t fromJSON(char *json, uint16_t sz, int &deviceId) = 0;
 
     bool extractStr(char *src, int szSource, const char *lookFor, char stopCond, char *dest, int szDest = -1)
     {
