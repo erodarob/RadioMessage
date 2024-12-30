@@ -75,9 +75,11 @@ uint16_t APRSCmd::toJSON(char *json, uint16_t sz, int deviceId)
 
 uint16_t APRSCmd::fromJSON(char *json, uint16_t sz, int &deviceId)
 {
+    // strings to store data in
     char deviceIdStr[5] = {0};
     char cmdStr[5] = {0};
     char argsStr[7] = {0};
+    // extract each string
     if (!extractStr(json, sz, "\"deviceId\":", ',', deviceIdStr))
         return 0;
     if (!extractStr(json, sz, "\"cmd\": \"", '"', cmdStr))
@@ -85,6 +87,7 @@ uint16_t APRSCmd::fromJSON(char *json, uint16_t sz, int &deviceId)
     if (!extractStr(json, sz, "\"args\": \"", '"', argsStr))
         return 0;
 
+    // convert to correct data type
     deviceId = atoi(deviceIdStr);
     this->cmd = strtol(cmdStr, NULL, 16);
     this->args.set(strtol(argsStr, NULL, 16));

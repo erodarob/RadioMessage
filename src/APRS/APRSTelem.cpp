@@ -155,6 +155,7 @@ uint16_t APRSTelem::toJSON(char *json, uint16_t sz, int deviceId)
 
 uint16_t APRSTelem::fromJSON(char *json, uint16_t sz, int &deviceId)
 {
+    // strings to store data in
     char deviceIdStr[5] = {0};
     char lat[14] = {0};
     char lng[14] = {0};
@@ -162,6 +163,8 @@ uint16_t APRSTelem::fromJSON(char *json, uint16_t sz, int &deviceId)
     char spd[14] = {0};
     char hdg[14] = {0};
     char sf[11] = {0};
+
+    // extract each string
     if (!extractStr(json, sz, "\"deviceId\":", ',', deviceIdStr))
         return 0;
     if (!extractStr(json, sz, "\"lat\": ", ',', lat, 14))
@@ -177,6 +180,7 @@ uint16_t APRSTelem::fromJSON(char *json, uint16_t sz, int &deviceId)
     if (!extractStr(json, sz, "\"stateflags\": \"", '"', sf, 11))
         return 0;
 
+    // convert to correct data type
     deviceId = atoi(deviceIdStr);
     this->lat = atof(lat);
     this->lng = atof(lng);
@@ -185,6 +189,7 @@ uint16_t APRSTelem::fromJSON(char *json, uint16_t sz, int &deviceId)
     this->hdg = atof(hdg);
     this->stateFlags.set(strtol(sf, NULL, 16));
 
+    // need to manually extract orientation (instead of using extractStr) since it is an array
     char *orientStrPos = strstr(json, "\"orient\": [");
     int orientPos = int(orientStrPos - json) + 11;
     int orientIndex = 0;

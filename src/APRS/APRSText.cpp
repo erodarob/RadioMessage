@@ -103,7 +103,10 @@ uint16_t APRSText::toJSON(char *json, uint16_t sz, int deviceId)
 
 uint16_t APRSText::fromJSON(char *json, uint16_t sz, int &deviceId)
 {
+    // strings to store data in
     char deviceIdStr[5] = {0};
+
+    // extract each string
     if (!extractStr(json, sz, "\"deviceId\":", ',', deviceIdStr))
         return 0;
     if (!extractStr(json, sz, "\"message\": \"", '"', this->msg))
@@ -111,6 +114,7 @@ uint16_t APRSText::fromJSON(char *json, uint16_t sz, int &deviceId)
     if (!extractStr(json, sz, "\"addressee\": \"", '"', this->addressee))
         return 0;
 
+    // convert to correct data type
     deviceId = atoi(deviceIdStr);
     this->msgLen = strlen(this->msg);
     this->addrLen = strlen(this->addressee);

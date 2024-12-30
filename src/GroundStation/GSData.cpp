@@ -147,17 +147,21 @@ uint16_t GSData::toJSON(char *json, uint16_t sz, int deviceId)
 
 uint16_t GSData::fromJSON(char *json, uint16_t sz, int &deviceId)
 {
+    // strings to store data in
     char deviceIdStr[5] = {0};
     char indexTxt[10] = {0};
 
+    // extract each string
     if (!extractStr(json, sz, "\"deviceId\":", ',', deviceIdStr))
         return 0;
     if (!extractStr(json, sz, "\"index\": ", ',', indexTxt, 3))
         return 0;
 
+    // convert to correct data type
     deviceId = atoi(deviceIdStr);
     this->index = atoi(indexTxt);
 
+    // need to manually extract buf (instead of using extractStr) since it is an array
     char *dataStrPos = strstr(json, "\"buf\": [");
     int current = int(dataStrPos - json) + 8; // add 8 to move to the "["
     this->size = 0;

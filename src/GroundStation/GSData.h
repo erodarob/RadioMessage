@@ -49,7 +49,9 @@ public:
     // fill internal buffer with ```size``` bytes using the data in ```buf```
     GSData *fill(uint8_t *buf, uint16_t size);
 
+    // place the data in the ```Data``` object in the ```json``` string, ```sz``` is the max size of the string, ```deviceId``` can be set based on hardware
     uint16_t toJSON(char *json, uint16_t sz, int deviceId) override;
+    // place the data in the ```json``` string in the ```Data``` object, ```sz``` is the max size of the string, ```deviceId``` can be set based on hardware
     uint16_t fromJSON(char *json, uint16_t sz, int &deviceId) override;
 };
 

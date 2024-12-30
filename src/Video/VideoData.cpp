@@ -93,13 +93,17 @@ uint16_t VideoData::toJSON(char *json, uint16_t sz, int deviceId)
 
 uint16_t VideoData::fromJSON(char *json, uint16_t sz, int &deviceId)
 {
+    // strings to store data in
     char deviceIdStr[5] = {0};
 
+    // extract each string
     if (!extractStr(json, sz, "\"deviceId\":", ',', deviceIdStr))
         return 0;
 
+    // convert to correct data type
     deviceId = atoi(deviceIdStr);
 
+    // need to manually extract data (instead of using extractStr) since it is an array
     char *dataStrPos = strstr(json, "{\"data\": [");
     int current = int(dataStrPos - json) + 10; // add 10 to move to the "["
     this->size = 0;

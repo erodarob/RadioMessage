@@ -23,14 +23,26 @@ public:
     // decode the data stored in ```data``` and place it in the ```Data``` object, ```sz``` is the number of bytes from ```data``` to decode
     virtual uint16_t decode(uint8_t *data, uint16_t sz) = 0;
 
+    // place the data in the ```Data``` object in the ```json``` string, ```sz``` is the max size of the string, ```deviceId``` can be set based on hardware
     virtual uint16_t toJSON(char *json, uint16_t sz, int deviceId) = 0;
+    // place the data in the ```json``` string in the ```Data``` object, ```sz``` is the max size of the string, ```deviceId``` can be set based on hardware
     virtual uint16_t fromJSON(char *json, uint16_t sz, int &deviceId) = 0;
 
+    // extract a substing from a string
+    // - src: the string to take the substring from
+    // - szSource: the size of the ```src``` string
+    // - lookFor: the substring to look for to start the substring
+    // - stopCond: the char to look for to stop the substring
+    // - dest: the string to place the substring into
+    // - szDest: the size of the ```dest``` string
     bool extractStr(char *src, int szSource, const char *lookFor, char stopCond, char *dest, int szDest = -1)
     {
+        // find to position of the start of the lookFor string
         char *strPos = strstr(src, lookFor);
+        // find the position of the start of the substring
         int pos = int(strPos - src) + strlen(lookFor);
         int counter = 0;
+        // write to the dest string until the stop charater is found, making sure we don't overrun any buffers
         while (src[pos] != stopCond && pos < szSource && (szDest == -1 || counter < szDest - 1))
         {
             dest[counter++] = src[pos++];
