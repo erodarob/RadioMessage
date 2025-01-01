@@ -1,8 +1,8 @@
 #include "GSData.h"
 
-GSData::GSData(uint8_t streamType, uint8_t streamIndex) : type(streamType), index(streamIndex) {}
+GSData::GSData(uint8_t streamType, uint8_t streamId) : dataType(streamType), id(streamId) {}
 
-GSData::GSData(uint8_t streamType, uint8_t streamIndex, uint8_t *buf, uint16_t size) : type(streamType), index(streamIndex)
+GSData::GSData(uint8_t streamType, uint8_t streamId, uint8_t *buf, uint16_t size) : dataType(streamType), id(streamId)
 {
     this->fill(buf, size);
 }
@@ -43,7 +43,7 @@ uint16_t GSData::encode(uint8_t *data, uint16_t size)
     // type will be 0x0T so << 4 to make it 0xT0
     // index will be 0x0I so just add
     // then add to get 0xLN
-    data[pos++] = (this->type << 4) + (this->index);
+    data[pos++] = (this->dataType << 4) + (this->id);
     // size will be 0xSSss so >> 8 to get 0x00SS
     data[pos++] = this->size >> 8;
     // size will be 0xSSss so & 0x00FF to get 0x00ss
@@ -67,9 +67,9 @@ uint16_t GSData::decode(uint8_t *data, uint16_t size)
     // I = index
     // Ss = size
     // 0 is 0xTI, so >> 4 to get 0x0T
-    this->type = data[pos] >> 4;
+    this->dataType = data[pos] >> 4;
     // and & 0x0F to get 0x0I
-    this->index = data[pos++] & 0x0F;
+    this->id = data[pos++] & 0x0F;
     // then SSss is in 1 and 2, so need to << 8 header[1] to make it 0xSS00, then add header[2]
     this->size = (data[pos++] << 8);
     this->size += data[pos++];
@@ -99,7 +99,7 @@ GSData *GSData::fill(uint8_t *buf, uint16_t size)
 
 uint16_t GSData::toJSON(char *json, uint16_t sz, int deviceId)
 {
-    uint16_t result = (uint16_t)snprintf(json, sz, "{\"type\": \"GSData\", \"deviceId\":%d, \"data\": {\"index\": %d, \"buf\": [", deviceId, this->index);
+    uint16_t result = (uint16_t)snprintf(json, sz, "{\"type\": \"GSData\", \"deviceId\":%d, \"data\": {\"id\": %d, \"buf\": [", deviceId, this->id);
     if (result >= sz)
     {
         // output too large
@@ -149,17 +149,17 @@ uint16_t GSData::fromJSON(char *json, uint16_t sz, int &deviceId)
 {
     // strings to store data in
     char deviceIdStr[5] = {0};
-    char indexTxt[10] = {0};
+    char idTxt[10] = {0};
 
     // extract each string
     if (!extractStr(json, sz, "\"deviceId\":", ',', deviceIdStr))
         return 0;
-    if (!extractStr(json, sz, "\"index\": ", ',', indexTxt, 3))
+    if (!extractStr(json, sz, "\"index\": ", ',', idTxt, 3))
         return 0;
 
     // convert to correct data type
     deviceId = atoi(deviceIdStr);
-    this->index = atoi(indexTxt);
+    this->id = atoi(idTxt);
 
     // need to manually extract buf (instead of using extractStr) since it is an array
     char *dataStrPos = strstr(json, "\"buf\": [");

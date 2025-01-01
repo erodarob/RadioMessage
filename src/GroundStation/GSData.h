@@ -16,9 +16,9 @@ public:
     static const uint8_t type = 0x00;
 
     // type of message, first byte of header, must be given by Data subclass, max 0xF
-    uint8_t type = 0x00;
+    uint8_t dataType = 0x00;
     // the multiplexing id of the message, max 0xF
-    uint8_t index = 0x00;
+    uint8_t id = 0x00;
     // size of message, second and third bytes of header
     uint16_t size = 0x0000; // length of the message (65535 btyes should be enough :)
     // buffer to store message data (not including header)
@@ -33,13 +33,15 @@ public:
 
     // GSData constructor
     // - type : the type of the message
-    GSData(uint8_t streamType, uint8_t streamIndex);
+    // - id : the multiplexing id of the message
+    GSData(uint8_t streamType, uint8_t streamId);
 
     // GSData constructor
     // - type : the type of the message
+    // - id : the multiplexing id of the message
     // - buf : the data for the message
     // - size : the size of the data
-    GSData(uint8_t streamType, uint8_t streamIndex, uint8_t *buf, uint16_t size);
+    GSData(uint8_t streamType, uint8_t streamId, uint8_t *buf, uint16_t size);
 
     // encode the data stored in the ```Data``` object and place the result in ```data```
     uint16_t encode(uint8_t *data, uint16_t sz) override;
