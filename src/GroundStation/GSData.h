@@ -13,7 +13,7 @@ public:
     // maximum size of the data
     static const uint16_t maxDataSize = maxSize - headerLen;
     // GSData type
-    static const uint8_t TYPE = 0x00;
+    static const uint8_t type = 0x00;
 
     // type of message, first byte of header, must be given by Data subclass, max 0xF
     uint8_t type = 0x00;
@@ -28,7 +28,7 @@ public:
     GSData() {};
 
     static bool decodeHeader(uint32_t header, uint8_t &streamType, uint8_t &streamIndex, uint16_t &size);
-    // header assumed to contain 3 bytes
+    // header assumed to contain at least GSData::headerLen bytes
     static bool decodeHeader(uint8_t *header, uint8_t &streamType, uint8_t &streamIndex, uint16_t &size);
 
     // GSData constructor

@@ -62,7 +62,7 @@ uint16_t APRSCmd::decode(uint8_t *data, uint16_t sz)
 
 uint16_t APRSCmd::toJSON(char *json, uint16_t sz, int deviceId)
 {
-    uint16_t result = (uint16_t)snprintf(json, sz, "{\"type\": \"APRSCmd\", \"deviceId\":%d, \"data\": {\"cmd\": \"%#x\", \"args\": \"%#x\"}}", deviceId, this->cmd, this->args.get());
+    uint16_t result = (uint16_t)snprintf(json, sz, "{\"type\": \"APRSCmd\", \"deviceId\":%d, \"data\": {\"cmd\": \"%#x\", \"args\": \"%#x\"}}", deviceId, this->cmd, (uint16_t)this->args.get());
 
     if (result < sz)
     {

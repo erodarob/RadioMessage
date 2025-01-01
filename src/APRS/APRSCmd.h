@@ -10,7 +10,7 @@ class APRSCmd : public APRSData
 {
 public:
     // APRSCmd type
-    static const uint8_t TYPE = 0x03;
+    static const uint8_t type = 0x03;
 
     // the command to send, 0x00 should always be NOP
     uint8_t cmd = 0x00;

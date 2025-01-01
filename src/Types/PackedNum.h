@@ -34,6 +34,7 @@ public:
     int encodingLength = 0;
     // the total number of bits in the encoding
     int totalBits = 0;
+
     // PackedNum constructor
     // - t: the size of the number
     PackedNum(PackedType t = PT_UINT8);

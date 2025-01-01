@@ -149,7 +149,7 @@ bool PackedNum::setEncoding(const uint8_t *widths, int length)
     delete[] this->encoding;
     this->encoding = new uint8_t[length];
     this->encodingLength = length;
-    memcpy(this->encoding, widths, sizeof(this->encoding));
+    memcpy(this->encoding, widths, length);
 
     return true;
 }
@@ -157,7 +157,6 @@ bool PackedNum::setEncoding(const uint8_t *widths, int length)
 bool PackedNum::encode(uint8_t *vals)
 {
     int lengthAdded = 0;
-    uint8_t t = 0;
     for (int i = 0; i < this->encodingLength; i++)
     {
         // expanded version
