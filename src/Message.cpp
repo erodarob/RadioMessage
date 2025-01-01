@@ -65,6 +65,18 @@ Message *Message::append(uint8_t *data, uint16_t sz)
     return this;
 }
 
+Message *Message::append(uint8_t data)
+{
+    // check if there's enough space to add the data
+    if (this->size + 1 <= this->maxSize)
+    {
+        // add the data to the end of the buffer
+        this->buf[this->size++] = data;
+        this->buf[this->size] = 0;
+    }
+    return this;
+}
+
 Message *Message::pop(uint8_t *data, uint16_t &sz)
 {
     // check if the message is longer than sz

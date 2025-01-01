@@ -55,6 +55,7 @@ public:
     // append the contents of ```data``` to the Message buffer, where ```data``` contains ```sz``` bytes, fails if final message size will be too large
     // Note: does not add message separator, use ```encode()``` to combine multiple messages
     Message *append(uint8_t *data, uint16_t sz);
+    Message *append(uint8_t data);
     // remove the last ```sz``` bytes from the Message buffer and place them in ```data```, ```sz``` is set to the number of bytes copied
     Message *pop(uint8_t *data, uint16_t &sz);
     // remove the first ```sz``` bytes from the Message buffer and place them in Packet ```data```, ```sz``` is set to the number of bytes copied
