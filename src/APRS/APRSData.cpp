@@ -5,7 +5,10 @@ uint16_t APRSData::encodeHeader(uint8_t *data, uint16_t sz, uint16_t &pos)
     // APRS header ("callsign>tocall,path:")
     if (sz < 29)
         return 0; // error too small for header
-    sprintf((char *)data, "%s>%s,%s:", this->config.callsign, this->config.tocall, this->config.path);
+    // cause error if config not set, without this everything is left blank
+    // if (strlen(this->config.callsign) == 0 || strlen(this->config.tocall) == 0 || strlen(this->config.path) == 0)
+    //     return 0; // error config not set properly
+    snprintf((char *)data, sz, "%s>%s,%s:", this->config.callsign, this->config.tocall, this->config.path);
 
     pos += strlen((char *)data);
 

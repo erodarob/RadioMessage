@@ -90,7 +90,7 @@ uint16_t APRSText::decode(uint8_t *data, uint16_t sz)
 
 uint16_t APRSText::toJSON(char *json, uint16_t sz, int deviceId)
 {
-    uint16_t result = (uint16_t)snprintf(json, sz, "{\"type\": \"APRSText\", \"deviceId\":%d, \"data\": {\"message\": \"%s\", \"addressee\": \"%s\"}}", deviceId, this->msg, this->addressee);
+    uint16_t result = (uint16_t)snprintf(json, sz, "{\"type\":\"APRSText\",\"deviceId\":%d,\"data\":{\"message\":\"%s\",\"addressee\":\"%s\"}}", deviceId, this->msg, this->addressee);
 
     if (result < sz)
     {
@@ -109,9 +109,9 @@ uint16_t APRSText::fromJSON(char *json, uint16_t sz, int &deviceId)
     // extract each string
     if (!extractStr(json, sz, "\"deviceId\":", ',', deviceIdStr))
         return 0;
-    if (!extractStr(json, sz, "\"message\": \"", '"', this->msg))
+    if (!extractStr(json, sz, "\"message\":\"", '"', this->msg))
         return 0;
-    if (!extractStr(json, sz, "\"addressee\": \"", '"', this->addressee))
+    if (!extractStr(json, sz, "\"addressee\":\"", '"', this->addressee))
         return 0;
 
     // convert to correct data type

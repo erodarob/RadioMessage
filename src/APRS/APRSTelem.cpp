@@ -142,7 +142,7 @@ uint16_t APRSTelem::decode(uint8_t *data, uint16_t sz)
 
 uint16_t APRSTelem::toJSON(char *json, uint16_t sz, int deviceId)
 {
-    uint16_t result = (uint16_t)snprintf(json, sz, "{\"type\": \"APRSTelem\", \"deviceId\":%d, \"data\": {\"lat\": %.7lf, \"lng\": %.7lf, \"alt\": %lf, \"spd\": %lf, \"hdg\": %lf, \"orient\": [%lf, %lf, %lf], \"stateFlags\": \"%#lx\"}}", deviceId, this->lat, this->lng, this->alt, this->spd, this->hdg, this->orient[0], this->orient[1], this->orient[2], (uint32_t)this->stateFlags.get());
+    uint16_t result = (uint16_t)snprintf(json, sz, "{\"type\":\"APRSTelem\",\"deviceId\":%d,\"data\":{\"lat\":%.7lf,\"lng\":%.7lf,\"alt\":%lf,\"spd\":%lf,\"hdg\":%lf,\"orient\":[%lf,%lf,%lf],\"stateFlags\":\"%#lx\"}}", deviceId, this->lat, this->lng, this->alt, this->spd, this->hdg, this->orient[0], this->orient[1], this->orient[2], (uint32_t)this->stateFlags.get());
 
     if (result < sz)
     {
@@ -167,17 +167,17 @@ uint16_t APRSTelem::fromJSON(char *json, uint16_t sz, int &deviceId)
     // extract each string
     if (!extractStr(json, sz, "\"deviceId\":", ',', deviceIdStr))
         return 0;
-    if (!extractStr(json, sz, "\"lat\": ", ',', lat, 14))
+    if (!extractStr(json, sz, "\"lat\":", ',', lat, 14))
         return 0;
-    if (!extractStr(json, sz, "\"lng\": ", ',', lng, 14))
+    if (!extractStr(json, sz, "\"lng\":", ',', lng, 14))
         return 0;
-    if (!extractStr(json, sz, "\"alt\": ", ',', alt, 14))
+    if (!extractStr(json, sz, "\"alt\":", ',', alt, 14))
         return 0;
-    if (!extractStr(json, sz, "\"spd\": ", ',', spd, 14))
+    if (!extractStr(json, sz, "\"spd\":", ',', spd, 14))
         return 0;
-    if (!extractStr(json, sz, "\"hdg\": ", ',', hdg, 14))
+    if (!extractStr(json, sz, "\"hdg\":", ',', hdg, 14))
         return 0;
-    if (!extractStr(json, sz, "\"stateflags\": \"", '"', sf, 11))
+    if (!extractStr(json, sz, "\"stateflags\":\"", '"', sf, 11))
         return 0;
 
     // convert to correct data type
@@ -190,8 +190,8 @@ uint16_t APRSTelem::fromJSON(char *json, uint16_t sz, int &deviceId)
     this->stateFlags.set(strtol(sf, NULL, 16));
 
     // need to manually extract orientation (instead of using extractStr) since it is an array
-    char *orientStrPos = strstr(json, "\"orient\": [");
-    int orientPos = int(orientStrPos - json) + 11;
+    char *orientStrPos = strstr(json, "\"orient\":[");
+    int orientPos = int(orientStrPos - json) + strlen("\"orient\":[");
     int orientIndex = 0;
     char orientStr[14] = {0};
     while (json[orientPos] != ']' && orientPos < sz && orientIndex < 3)

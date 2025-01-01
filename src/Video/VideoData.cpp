@@ -44,7 +44,7 @@ uint16_t VideoData::decode(uint8_t *data, uint16_t sz)
 
 uint16_t VideoData::toJSON(char *json, uint16_t sz, int deviceId)
 {
-    uint16_t result = (uint16_t)snprintf(json, sz, "{\"type\": \"VideoData\", \"deviceId\":%d, \"data\": {\"data\": [", deviceId);
+    uint16_t result = (uint16_t)snprintf(json, sz, "{\"type\":\"VideoData\",\"deviceId\":%d,\"data\":{\"data\":[", deviceId);
 
     if (result >= sz)
     {
@@ -104,7 +104,7 @@ uint16_t VideoData::fromJSON(char *json, uint16_t sz, int &deviceId)
     deviceId = atoi(deviceIdStr);
 
     // need to manually extract data (instead of using extractStr) since it is an array
-    char *dataStrPos = strstr(json, "{\"data\": [");
+    char *dataStrPos = strstr(json, "{\"data\":[");
     int current = int(dataStrPos - json) + 10; // add 10 to move to the "["
     this->size = 0;
 

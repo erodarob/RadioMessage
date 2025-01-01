@@ -15,7 +15,7 @@ using namespace std;
 class Data
 {
 public:
-    static const uint8_t TYPE;
+    static const uint8_t type;
 
     virtual ~Data() {}; // Virtual descructor. Very important
     // encode the data stored in the ```Data``` object and place the result in ```data```, ```sz``` is the max size of ```data```
@@ -39,6 +39,9 @@ public:
     {
         // find to position of the start of the lookFor string
         char *strPos = strstr(src, lookFor);
+        // check that the substring was found
+        if (!strPos)
+            return false;
         // find the position of the start of the substring
         int pos = int(strPos - src) + strlen(lookFor);
         int counter = 0;

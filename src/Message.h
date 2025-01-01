@@ -47,7 +47,7 @@ public:
     // encodes ```data``` and places the output in the Message buffer
     // Note: cannot combine multiple messages using VideoData
     Message *encode(Data *data, bool append = false);
-    // decodes ```data``` using the Message buffer, ```data``` is populated with the decoded information
+    // decodes data from the Message buffer, ```data``` is populated with the decoded information
     Message *decode(Data *data);
     // clears all stored data
     Message *clear();

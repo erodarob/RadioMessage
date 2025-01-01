@@ -99,7 +99,7 @@ GSData *GSData::fill(uint8_t *buf, uint16_t size)
 
 uint16_t GSData::toJSON(char *json, uint16_t sz, int deviceId)
 {
-    uint16_t result = (uint16_t)snprintf(json, sz, "{\"type\": \"GSData\", \"deviceId\":%d, \"data\": {\"id\": %d, \"buf\": [", deviceId, this->id);
+    uint16_t result = (uint16_t)snprintf(json, sz, "{\"type\":\"GSData\",\"deviceId\":%d,\"data\":{\"id\":%d,\"buf\":[", deviceId, this->id);
     if (result >= sz)
     {
         // output too large
@@ -154,7 +154,7 @@ uint16_t GSData::fromJSON(char *json, uint16_t sz, int &deviceId)
     // extract each string
     if (!extractStr(json, sz, "\"deviceId\":", ',', deviceIdStr))
         return 0;
-    if (!extractStr(json, sz, "\"index\": ", ',', idTxt, 3))
+    if (!extractStr(json, sz, "\"index\":", ',', idTxt, 3))
         return 0;
 
     // convert to correct data type
@@ -162,8 +162,8 @@ uint16_t GSData::fromJSON(char *json, uint16_t sz, int &deviceId)
     this->id = atoi(idTxt);
 
     // need to manually extract buf (instead of using extractStr) since it is an array
-    char *dataStrPos = strstr(json, "\"buf\": [");
-    int current = int(dataStrPos - json) + 8; // add 8 to move to the "["
+    char *dataStrPos = strstr(json, "\"buf\":[");
+    int current = int(dataStrPos - json) + strlen("\"buf\":[");
     this->size = 0;
 
     while (json[current] != ']' && current < sz)

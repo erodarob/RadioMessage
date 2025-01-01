@@ -62,7 +62,7 @@ uint16_t APRSCmd::decode(uint8_t *data, uint16_t sz)
 
 uint16_t APRSCmd::toJSON(char *json, uint16_t sz, int deviceId)
 {
-    uint16_t result = (uint16_t)snprintf(json, sz, "{\"type\": \"APRSCmd\", \"deviceId\":%d, \"data\": {\"cmd\": \"%#x\", \"args\": \"%#x\"}}", deviceId, this->cmd, (uint16_t)this->args.get());
+    uint16_t result = (uint16_t)snprintf(json, sz, "{\"type\":\"APRSCmd\",\"deviceId\":%d,\"data\":{\"cmd\":\"%#x\",\"args\":\"%#x\"}}", deviceId, this->cmd, (uint16_t)this->args.get());
 
     if (result < sz)
     {
@@ -80,11 +80,11 @@ uint16_t APRSCmd::fromJSON(char *json, uint16_t sz, int &deviceId)
     char cmdStr[5] = {0};
     char argsStr[7] = {0};
     // extract each string
-    if (!extractStr(json, sz, "\"deviceId\":", ',', deviceIdStr))
+    if (!extractStr(json, sz, "\"deviceId\":", ',', deviceIdStr, sizeof(deviceIdStr)))
         return 0;
-    if (!extractStr(json, sz, "\"cmd\": \"", '"', cmdStr))
+    if (!extractStr(json, sz, "\"cmd\":\"", '"', cmdStr, sizeof(cmdStr)))
         return 0;
-    if (!extractStr(json, sz, "\"args\": \"", '"', argsStr))
+    if (!extractStr(json, sz, "\"args\":\"", '"', argsStr, sizeof(argsStr)))
         return 0;
 
     // convert to correct data type
