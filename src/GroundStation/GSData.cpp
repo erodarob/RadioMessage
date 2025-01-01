@@ -32,8 +32,8 @@ bool GSData::decodeHeader(uint8_t *header, uint8_t &streamType, uint8_t &streamI
 uint16_t GSData::encode(uint8_t *data, uint16_t size)
 {
     uint16_t pos = 0;
-    if (size < this->size)
-        return 0; // error not enough space for message
+    if (size < pos + 3)
+        return 0; // error data too small for header
 
     // header
     // TISSss
@@ -49,6 +49,9 @@ uint16_t GSData::encode(uint8_t *data, uint16_t size)
     // size will be 0xSSss so & 0x00FF to get 0x00ss
     data[pos++] = this->size & 0x00FF;
 
+    if (size < pos + this->size)
+        return 0; // not enough room for data
+
     // body
     memcpy(data + pos, this->buf, this->size);
 
@@ -60,6 +63,8 @@ uint16_t GSData::decode(uint8_t *data, uint16_t size)
     uint16_t pos = 0;
     if (size > this->maxSize)
         return 0; // error data too big
+    if (size < pos + 3)
+        return 0; // error data too small for header
 
     // header
     // TISSss
@@ -72,7 +77,12 @@ uint16_t GSData::decode(uint8_t *data, uint16_t size)
     this->id = data[pos++] & 0x0F;
     // then SSss is in 1 and 2, so need to << 8 header[1] to make it 0xSS00, then add header[2]
     this->size = (data[pos++] << 8);
-    this->size += data[pos++];
+    this->size += data[pos];
+
+    if (size < pos + 1)
+        return 0; // no data available
+
+    pos++;
 
     // body
     memcpy(this->buf, data + pos, size - pos);

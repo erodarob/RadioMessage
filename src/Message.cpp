@@ -83,11 +83,14 @@ Message *Message::pop(uint8_t *data, uint16_t &sz)
     if (this->size - sz > 0)
     {
         // put sz bytes in data, starting at this->size - sz
-        this->get(data, sz, this->size - sz);
+        if (data != nullptr)
+        {
+            this->get(data, sz, this->size - sz);
+            data[sz] = 0;
+        }
+
         // "remove" copied bytes
         this->size -= sz;
-        data[sz] = 0;
-
         this->buf[this->size] = 0;
     }
     // if the message is shorter than sz
@@ -95,11 +98,14 @@ Message *Message::pop(uint8_t *data, uint16_t &sz)
     {
         // put this->size bytes in data
         sz = this->size;
-        this->get(data, sz);
+        if (data != nullptr)
+        {
+            this->get(data, sz);
+            data[sz] = 0;
+        }
+
         // "remove" copied bytes
         this->size -= sz;
-        data[sz] = 0;
-
         this->buf[this->size] = 0;
     }
     else
@@ -115,12 +121,15 @@ Message *Message::shift(uint8_t *data, uint16_t &sz)
     if (this->size - sz > 0)
     {
         // put sz bytes in data, starting at 0
-        this->get(data, sz);
-        // "remove" copied bytes
-        this->size -= sz;
-        data[sz] = 0;
+        if (data != nullptr)
+        {
+            this->get(data, sz);
+            data[sz] = 0;
+        }
 
+        // "remove" copied bytes
         // shift the array
+        this->size -= sz;
         memcpy(this->buf, this->buf + sz, this->size);
         this->buf[this->size] = 0;
     }
@@ -129,11 +138,14 @@ Message *Message::shift(uint8_t *data, uint16_t &sz)
     {
         // put this->size bytes in data, starting at 0
         sz = this->size;
-        this->get(data, sz);
+        if (data != nullptr)
+        {
+            this->get(data, sz);
+            data[sz] = 0;
+        }
+
         // "remove" copied bytes
         this->size -= sz;
-        data[sz] = 0;
-
         // just in case this->size bytes were not copied, otherwise technically this should do nothing
         memcpy(this->buf, this->buf + sz, this->size);
         this->buf[this->size] = 0;
