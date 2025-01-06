@@ -9,7 +9,7 @@ GSData::GSData(uint8_t streamType, uint8_t streamId, uint8_t deviceId, uint8_t *
 
 bool GSData::decodeGSMHeader(char *header, int length, uint32_t &bitrate)
 {
-    if (length < sizeof(staticGSMHeader) - 1)
+    if (length < (int)sizeof(staticGSMHeader) - 1)
         return false; // Error: header data not big enough
     int findHeader = memcmp(header, GSData::staticGSMHeader, sizeof(staticGSMHeader) - 1);
     if (findHeader == 0)
@@ -163,9 +163,12 @@ uint16_t GSData::encode(uint8_t *data, uint16_t sz)
     // D = deviceId
     // S = size first 4
     // ss = size last 8
-    header.pack((uint8_t[]){this->type, this->id, this->deviceId, (uint8_t)(this->size >> 8), (uint8_t)(this->size & 0xFF)});
+    uint8_t headerData[] = {this->dataType, this->id, this->deviceId, (uint8_t)(this->size >> 8), (uint8_t)(this->size & 0xFF)};
+    header.pack(headerData);
     // place header in data
     header.get(data);
+
+    pos += GSData::headerLen;
 
     if (sz < pos + this->size)
         return 0; // not enough room for data

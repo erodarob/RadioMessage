@@ -85,7 +85,7 @@ uint16_t Metrics::decode(uint8_t *data, uint16_t sz)
 
 uint16_t Metrics::toJSON(char *json, uint16_t sz, int deviceId)
 {
-    uint16_t result = (uint16_t)snprintf(json, sz, "{\"type\":\"Metrics\",\"deviceId\":%d,\"data\":{\"deviceId\":%d,\"bitrate\":%d,\"rssi\":%d}}", deviceId, this->deviceId, this->bitrate, this->rssi);
+    uint16_t result = (uint16_t)snprintf(json, sz, "{\"type\":\"Metrics\",\"deviceId\":%d,\"data\":{\"deviceId\":%d,\"bitrate\":%lu,\"rssi\":%d}}", deviceId, this->deviceId, this->bitrate, this->rssi);
 
     if (result < sz)
     {
