@@ -9,12 +9,12 @@ APRSCmd::APRSCmd(APRSConfig config, uint8_t cmd, uint16_t args) : APRSData(confi
 
 APRSCmd::APRSCmd(APRSConfig config, uint8_t cmd, uint8_t *args, uint8_t *encoding, uint8_t length) : APRSData(config), cmd(cmd), args(encoding, length)
 {
-    this->args.encode(args);
+    this->args.pack(args);
 }
 
 bool APRSCmd::getArgs(uint8_t *args)
 {
-    return this->args.decode(args);
+    return this->args.unpack(args);
 }
 
 uint16_t APRSCmd::encode(uint8_t *data, uint16_t sz)

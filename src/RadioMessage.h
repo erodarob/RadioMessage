@@ -19,6 +19,7 @@
 #include "APRS/APRSText.h"
 // pull GroundStation classes
 #include "GroundStation/GSData.h"
+#include "GroundStation/Metrics.h"
 // pull Types
 #include "Types/PackedNum.h"
 

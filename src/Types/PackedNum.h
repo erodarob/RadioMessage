@@ -11,6 +11,8 @@
 using namespace std;
 #endif
 
+// TODO: write pack and unpack functions for uint16
+
 // the different possible sizes of the number
 enum PackedType
 {
@@ -34,6 +36,8 @@ public:
     int encodingLength = 0;
     // the total number of bits in the encoding
     int totalBits = 0;
+    // the total number of bytes in the encoding, rounded up
+    int totalBytes = 0;
 
     // PackedNum constructor
     // - t: the size of the number
@@ -64,16 +68,22 @@ public:
     bool setEncoding(const uint8_t *widths, int length);
     // encode values into the number based on encoding
     // - vals: the values to encode (same length as encoding)
-    bool encode(uint8_t *vals);
+    bool pack(uint8_t *vals);
     // decode into values from number based on encoding
     // - vals: an array to decode values into (same length as encoding)
-    bool decode(uint8_t *vals);
+    bool unpack(uint8_t *vals);
 
     // set the value of the number, automatically truncated and converted to correct type
     // - n: the new number
     void set(uint64_t n);
+    // set the value of the number, read from an uint8_t array, this->totalBytes must be available
+    // - arr: the array to read from
+    bool set(uint8_t *arr);
     // get the value of the number, automatically truncated, cast to correct type if necessary
     uint64_t get();
+    // get the value of the number, placed into a uint8_t array, must be at least this->totalBytes long
+    // - arr: the array to place the number into
+    bool get(uint8_t *arr);
 };
 
 #endif

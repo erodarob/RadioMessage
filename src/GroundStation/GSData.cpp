@@ -1,55 +1,173 @@
 #include "GSData.h"
 
-GSData::GSData(uint8_t streamType, uint8_t streamId) : dataType(streamType), id(streamId) {}
+GSData::GSData(uint8_t streamType, uint8_t streamId, uint8_t deviceId) : dataType(streamType), id(streamId), deviceId(deviceId) {}
 
-GSData::GSData(uint8_t streamType, uint8_t streamId, uint8_t *buf, uint16_t size) : dataType(streamType), id(streamId)
+GSData::GSData(uint8_t streamType, uint8_t streamId, uint8_t deviceId, uint8_t *buf, uint16_t size) : dataType(streamType), id(streamId), deviceId(deviceId)
 {
     this->fill(buf, size);
 }
 
-bool GSData::decodeHeader(uint32_t header, uint8_t &streamType, uint8_t &streamIndex, uint16_t &size)
+bool GSData::decodeGSMHeader(char *header, int length, uint32_t &bitrate)
 {
-    // header will be TISSss so >> 20 to get 0x0T
-    streamType = header >> 20;
-    // >> 16 to get 0xTI and & 0xF to get 0x0I
-    streamIndex = (header >> 16) & 0x0F;
-    // then & 0xFFFF to get SSss
-    size = header & 0xFFFF;
+    if (length < sizeof(staticGSMHeader) - 1)
+        return false; // Error: header data not big enough
+    int findHeader = memcmp(header, GSData::staticGSMHeader, sizeof(staticGSMHeader) - 1);
+    if (findHeader == 0)
+    {
+        if (length - (sizeof(staticGSMHeader) - 1) >= sizeof(uint32_t))
+        {
+            uint8_t bitrateData[4] = {0, 0, 0, 0};
+            memcpy(bitrateData, header + sizeof(staticGSMHeader) - 1, sizeof(uint32_t));
+            bitrate += bitrateData[0] << 24;
+            bitrate += bitrateData[1] << 16;
+            bitrate += bitrateData[2] << 8;
+            bitrate += bitrateData[3] << 0;
+            return true;
+        } // else header is corrupted (too few bytes given)
+    }
+    return false;
+}
+
+bool GSData::encodeGSMHeader(char *header, int length, uint32_t bitrate)
+{
+    if (length < GSData::gsmHeaderSize)
+        return false;
+    memcpy(header, staticGSMHeader, sizeof(staticGSMHeader) - 1);
+    uint8_t bitrateData[4] = {0, 0, 0, 0};
+    bitrateData[0] = (bitrate & 0xff000000) >> 24;
+    bitrateData[1] = (bitrate & 0x00ff0000) >> 16;
+    bitrateData[2] = (bitrate & 0x0000ff00) >> 8;
+    bitrateData[3] = (bitrate & 0x000000ff) >> 0;
+    memcpy(header + sizeof(staticGSMHeader) - 1, bitrateData, sizeof(bitrateData));
     return true;
 }
 
-bool GSData::decodeHeader(uint8_t *header, uint8_t &streamType, uint8_t &streamIndex, uint16_t &size)
+bool GSData::decodeHeader(uint32_t header, uint8_t &streamType, uint8_t &streamId, uint8_t &deviceId, uint16_t &size)
 {
-    // header will be TISSss so 0 is TI, so >> 4 to get 0x0T
-    streamType = header[0] >> 4;
-    // and & 0x0F to get 0x0I
-    streamIndex = header[0] & 0x0F;
-    // then SSss is in 1 and 2, so need to << 8 header[1] to make it 0xSS00, then add header[2]
-    size = (header[1] << 8) + header[2];
+    // header
+    // TIDSss
+    // T = type
+    // I = id
+    // D = deviceId
+    // S = size first 4
+    // ss = size last 8
+    // create a PackedNum to decode the header
+    PackedNum packedHeader(GSData::headerEncoding, GSData::headerEncodingLength);
+    packedHeader.set(header);
+    // unpack the data
+    uint8_t headerData[GSData::headerEncodingLength] = {0};
+    bool success = packedHeader.unpack(headerData);
+
+    if (success)
+    {
+        // set all variables according to where data is stored
+        streamType = headerData[0];
+        streamId = headerData[1];
+        deviceId = headerData[2];
+        size = headerData[3] << 8;
+        size += headerData[4];
+    }
+    return success;
+}
+
+bool GSData::decodeHeader(uint8_t *header, uint8_t &streamType, uint8_t &streamId, uint8_t &deviceId, uint16_t &size)
+{
+    // header
+    // TIDSss
+    // T = type
+    // I = id
+    // D = deviceId
+    // S = size first 4
+    // ss = size last 8
+    // create a PackedNum to decode the header
+    PackedNum packedHeader(GSData::headerEncoding, GSData::headerEncodingLength);
+    packedHeader.set(header);
+    // unpack the data
+    uint8_t headerData[GSData::headerEncodingLength] = {0};
+    bool success = packedHeader.unpack(headerData);
+
+    if (success)
+    {
+        // set all variables according to where data is stored
+        streamType = headerData[0];
+        streamId = headerData[1];
+        deviceId = headerData[2];
+        size = headerData[3] << 8;
+        size += headerData[4];
+    }
     return true;
 }
 
-uint16_t GSData::encode(uint8_t *data, uint16_t size)
+bool GSData::decodeHeader(uint32_t header)
+{
+    // header
+    // TIDSss
+    // T = type
+    // I = id
+    // D = deviceId
+    // S = size first 4
+    // ss = size last 8
+    this->header.set(header);
+    // unpack the data
+    uint8_t headerData[GSData::headerEncodingLength] = {0};
+    bool success = this->header.unpack(headerData);
+
+    if (success)
+    {
+        // set all variables according to where data is stored
+        this->dataType = headerData[0];
+        this->id = headerData[1];
+        this->deviceId = headerData[2];
+        this->size = headerData[3] << 8;
+        this->size += headerData[4];
+    }
+    return success;
+}
+
+bool GSData::decodeHeader(uint8_t *header)
+{
+    // header
+    // TIDSss
+    // T = type
+    // I = id
+    // D = deviceId
+    // S = size first 4
+    // ss = size last 8
+    this->header.set(header);
+    // unpack the data
+    uint8_t headerData[GSData::headerEncodingLength] = {0};
+    bool success = this->header.unpack(headerData);
+
+    if (success)
+    {
+        // set all variables according to where data is stored
+        this->dataType = headerData[0];
+        this->id = headerData[1];
+        this->deviceId = headerData[2];
+        this->size = headerData[3] << 8;
+        this->size += headerData[4];
+    }
+    return success;
+}
+
+uint16_t GSData::encode(uint8_t *data, uint16_t sz)
 {
     uint16_t pos = 0;
-    if (size < pos + 3)
+    if (sz < pos + GSData::headerLen)
         return 0; // error data too small for header
 
     // header
-    // TISSss
+    // TIDSss
     // T = type
-    // I = index
-    // Ss = size
-    // type will be 0x0T so << 4 to make it 0xT0
-    // index will be 0x0I so just add
-    // then add to get 0xLN
-    data[pos++] = (this->dataType << 4) + (this->id);
-    // size will be 0xSSss so >> 8 to get 0x00SS
-    data[pos++] = this->size >> 8;
-    // size will be 0xSSss so & 0x00FF to get 0x00ss
-    data[pos++] = this->size & 0x00FF;
+    // I = id
+    // D = deviceId
+    // S = size first 4
+    // ss = size last 8
+    header.pack((uint8_t[]){this->type, this->id, this->deviceId, (uint8_t)(this->size >> 8), (uint8_t)(this->size & 0xFF)});
+    // place header in data
+    header.get(data);
 
-    if (size < pos + this->size)
+    if (sz < pos + this->size)
         return 0; // not enough room for data
 
     // body
@@ -58,41 +176,37 @@ uint16_t GSData::encode(uint8_t *data, uint16_t size)
     return pos + this->size;
 }
 
-uint16_t GSData::decode(uint8_t *data, uint16_t size)
+uint16_t GSData::decode(uint8_t *data, uint16_t sz)
 {
     uint16_t pos = 0;
-    if (size > this->maxSize)
+    if (sz > GSData::maxSize)
         return 0; // error data too big
-    if (size < pos + 3)
+    if (sz < pos + GSData::headerLen)
         return 0; // error data too small for header
 
     // header
-    // TISSss
+    // TIDSss
     // T = type
-    // I = index
-    // Ss = size
-    // 0 is 0xTI, so >> 4 to get 0x0T
-    this->dataType = data[pos] >> 4;
-    // and & 0x0F to get 0x0I
-    this->id = data[pos++] & 0x0F;
-    // then SSss is in 1 and 2, so need to << 8 header[1] to make it 0xSS00, then add header[2]
-    this->size = (data[pos++] << 8);
-    this->size += data[pos];
+    // I = id
+    // D = deviceId
+    // S = size first 4
+    // ss = size last 8
+    this->decodeHeader(data);
 
-    if (size < pos + 1)
+    pos += GSData::headerLen;
+
+    if (sz < pos + 1)
         return 0; // no data available
-
-    pos++;
 
     // body
     memcpy(this->buf, data + pos, size - pos);
-    return size;
+    return pos + this->size;
 }
 
 GSData *GSData::fill(uint8_t *buf, uint16_t size)
 {
     // check if size is too big
-    if (size <= this->maxDataSize)
+    if (size <= GSData::maxSize)
     {
         // if it is fine fill the buffer
         this->size = size;
@@ -100,9 +214,9 @@ GSData *GSData::fill(uint8_t *buf, uint16_t size)
     }
     else
     {
-        // otherwise only copy dataMaxSize bytes
-        this->size = this->maxDataSize;
-        memcpy(this->buf, buf, this->maxDataSize);
+        // otherwise only copy maxSize bytes
+        this->size = GSData::maxSize;
+        memcpy(this->buf, buf, GSData::maxSize);
     }
     return this;
 }

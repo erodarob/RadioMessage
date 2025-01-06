@@ -100,6 +100,7 @@ PackedNum::PackedNum(const uint8_t *widths, int length)
 
     // keep track of total number of bits
     this->totalBits = total;
+    this->totalBytes = (total + (8 - 1)) / 8; // magically round up to nearest int
 
     // set the internal encoding variable and length
     delete[] this->encoding;
@@ -154,7 +155,7 @@ bool PackedNum::setEncoding(const uint8_t *widths, int length)
     return true;
 }
 
-bool PackedNum::encode(uint8_t *vals)
+bool PackedNum::pack(uint8_t *vals)
 {
     int lengthAdded = 0;
     for (int i = 0; i < this->encodingLength; i++)
@@ -189,7 +190,7 @@ bool PackedNum::encode(uint8_t *vals)
     return true;
 }
 
-bool PackedNum::decode(uint8_t *vals)
+bool PackedNum::unpack(uint8_t *vals)
 {
     int lengthRemoved = 0;
     for (int i = 0; i < this->encodingLength; i++)
@@ -244,6 +245,41 @@ void PackedNum::set(uint64_t n)
     }
 }
 
+bool PackedNum::set(uint8_t *arr)
+{
+    // this is a special case of pack where the encoding is all 8's
+    for (int i = 0; i < this->totalBytes; i++)
+    {
+        // expanded version
+        // from unpack, lengthAdded becomes i * 8
+        // this->encoding[i] becomes 8
+        // int pos = this->totalBits - this->encoding[i] - lengthAdded; // the position in the bits
+        // int maxVal = (1 << this->encoding[i]) - 1; // the maximum value of this number
+        // int val = vals[i] & maxVal; // truncate the given number in case it is larger than the max val
+        // this->num += val << pos; // move the number to the correct position to add
+
+        // need to cast num to the correct type
+        switch (this->type)
+        {
+        case PT_UINT8:
+            *(uint8_t *)this->num += (arr[i] & ((1 << 8) - 1)) << (this->totalBits - 8 * (i + 1));
+            break;
+        case PT_UINT16:
+            *(uint16_t *)this->num += (arr[i] & ((1 << 8) - 1)) << (this->totalBits - 8 * (i + 1));
+            break;
+        case PT_UINT32:
+            *(uint32_t *)this->num += (arr[i] & ((1 << 8) - 1)) << (this->totalBits - 8 * (i + 1));
+            break;
+        case PT_UINT64:
+            *(uint64_t *)this->num += (arr[i] & ((1 << 8) - 1)) << (this->totalBits - 8 * (i + 1));
+            break;
+        default:
+            return false;
+        }
+    }
+    return true;
+}
+
 uint64_t PackedNum::get()
 {
     // cast num to the correct type and truncate
@@ -258,4 +294,39 @@ uint64_t PackedNum::get()
     default:
         return *(uint64_t *)this->num;
     }
+}
+
+bool PackedNum::get(uint8_t *arr)
+{
+    // this is a special case of unpack where the encoding is all 8's
+    for (int i = 0; i < this->totalBytes; i++)
+    {
+        // expanded version
+        // from unpack, lengthRemoved becomes i * 8
+        // this->encoding[i] becomes 8
+        // int pos = (1 << (this->totalBits - lengthRemoved)) - 1; // a binary number containing 0 to the left of the number and 1 to the right and including the number
+        // int valPlusTheRight = this->num & pos; // remove everything to the left of the number
+        // int shift = this->totalBits - this->encoding[i] - lengthRemoved; // how many bits we need to shift to get just the number
+        // vals[i] = valPlusTheRight >> shift; // shift to get just the number
+
+        // need to cast num to the correct type
+        switch (this->type)
+        {
+        case PT_UINT8:
+            arr[i] = (*(uint8_t *)this->num & ((1 << (this->totalBits - i * 8)) - 1)) >> (this->totalBits - 8 * (i + 1));
+            break;
+        case PT_UINT16:
+            arr[i] = (*(uint16_t *)this->num & ((1 << (this->totalBits - i * 8)) - 1)) >> (this->totalBits - 8 * (i + 1));
+            break;
+        case PT_UINT32:
+            arr[i] = (*(uint32_t *)this->num & ((1 << (this->totalBits - i * 8)) - 1)) >> (this->totalBits - 8 * (i + 1));
+            break;
+        case PT_UINT64:
+            arr[i] = (*(uint64_t *)this->num & ((1 << (this->totalBits - i * 8)) - 1)) >> (this->totalBits - 8 * (i + 1));
+            break;
+        default:
+            return false;
+        }
+    }
+    return true;
 }

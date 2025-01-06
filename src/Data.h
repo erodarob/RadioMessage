@@ -11,6 +11,8 @@
 using namespace std;
 #endif
 
+// TODO: deviceId probably not needed in JSON
+
 // basically just a container to place decoded data into
 class Data
 {

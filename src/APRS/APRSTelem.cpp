@@ -19,12 +19,12 @@ APRSTelem::APRSTelem(APRSConfig config, double lat, double lng, double alt, doub
     this->orient[1] = orient[1];
     this->orient[2] = orient[2];
 
-    this->stateFlags.encode(stateFlags);
+    this->stateFlags.pack(stateFlags);
 }
 
 bool APRSTelem::getStateFlags(uint8_t *flags)
 {
-    return this->stateFlags.decode(flags);
+    return this->stateFlags.unpack(flags);
 }
 
 uint16_t APRSTelem::encode(uint8_t *data, uint16_t sz)
