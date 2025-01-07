@@ -158,6 +158,7 @@ bool PackedNum::setEncoding(const uint8_t *widths, int length)
 bool PackedNum::pack(uint8_t *vals)
 {
     int lengthAdded = 0;
+    this->set((uint64_t)0);
     for (int i = 0; i < this->encodingLength; i++)
     {
         // expanded version
@@ -247,6 +248,7 @@ void PackedNum::set(uint64_t n)
 
 bool PackedNum::set(uint8_t *arr)
 {
+    this->set((uint64_t)0);
     // this is a special case of pack where the encoding is all 8's
     for (int i = 0; i < this->totalBytes; i++)
     {

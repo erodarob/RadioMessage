@@ -202,7 +202,7 @@ uint16_t GSData::decode(uint8_t *data, uint16_t sz)
         return 0; // no data available
 
     // body
-    memcpy(this->buf, data + pos, size - pos);
+    memcpy(this->buf, data + pos, this->size);
     return pos + this->size;
 }
 

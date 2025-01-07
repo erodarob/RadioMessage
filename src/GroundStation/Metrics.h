@@ -26,7 +26,13 @@ public:
     // bits saved in case update is called faster than timer resolution
     int savedBits = 0;
     // an average of the bitrate since setInitialTime() was called
-    int averageBitrate = 0; // bits/sec
+    uint32_t averageBitrate = 0; // bits/sec
+    // the last few data points for bits received
+    uint8_t lastBits[10] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+    // the last few data points for change in time
+    uint8_t lastdeltaT[10] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+    // pointer to the data point to replace next
+    uint8_t lastPointer = 0;
 
     // Metrics default constructor
     Metrics() {};

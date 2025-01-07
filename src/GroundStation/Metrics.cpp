@@ -18,17 +18,34 @@ void Metrics::updateBitrate(uint32_t bits, uint64_t currentTime)
     // avoid division by 0
     if (deltaT > 0)
     {
-        this->bitrate = (bits + this->savedBits) * 1000 / deltaT; // need to convert deltaT to seconds
+        uint32_t instantBitrate = (bits + this->savedBits) * 1000 / deltaT; // need to convert deltaT to seconds
         this->savedBits = 0;
 
-        // running average
-        this->averageBitrate = ((uint64_t)this->averageBitrate * ((double)(this->lastTime - this->initialTime) / 1000) + (uint64_t)this->bitrate * ((double)deltaT / 1000)) / ((double)(currentTime - this->initialTime) / 1000);
+        // replace oldest data point with this one
+        this->lastBits[lastPointer] = instantBitrate * (double)deltaT / 1000; // will be averaged over last second
+        this->lastdeltaT[lastPointer++] = deltaT;
+        if (lastPointer == sizeof(lastBits))
+            lastPointer = 0;
+
+        this->bitrate = 0;
+        uint64_t totalTime = 0;
+
+        // compute average
+        for (int i = 0; i < (int)sizeof(this->lastBits); i++)
+        {
+            this->bitrate += this->lastBits[i];
+            totalTime += this->lastdeltaT[i];
+        }
+        this->bitrate /= (double)totalTime / 1000;
+
+        // cumulative average
+        this->averageBitrate = ((uint64_t)this->averageBitrate * ((double)(this->lastTime - this->initialTime) / 1000) + (uint64_t)instantBitrate * ((double)deltaT / 1000)) / ((double)(currentTime - this->initialTime) / 1000);
 
         this->lastTime = currentTime;
     }
     else
     {
-        // updated is being called faster than clock resolution
+        // update is being called faster than clock resolution
         this->savedBits += bits;
     }
 }
@@ -64,13 +81,14 @@ uint16_t Metrics::decode(uint8_t *data, uint16_t sz)
 {
     uint16_t pos = 0;
     if (sz < pos + Metrics::dataLen)
-        return 0; // error data too small for data
+        return 0; // error data too small for
 
     // pretend rssi is an unsigned int to make sure we can work with it nicely using +=
     uint16_t rssiUnsigned = 0;
+    this->bitrate = 0;
 
     this->deviceId = data[pos++];
-    this->bitrate += data[pos++] << 24;
+    this->bitrate = data[pos++] << 24;
     this->bitrate += data[pos++] << 16;
     this->bitrate += data[pos++] << 8;
     this->bitrate += data[pos++] << 0;
