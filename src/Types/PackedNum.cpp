@@ -1,6 +1,6 @@
 #include "PackedNum.h"
 
-PackedNum::PackedNum(PackedType t)
+PackedNum::PackedNum(PackedSize t)
 {
     // set the type
     this->type = t;

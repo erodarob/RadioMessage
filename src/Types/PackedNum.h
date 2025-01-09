@@ -14,7 +14,7 @@ using namespace std;
 // TODO: write pack and unpack functions for uint16
 
 // the different possible sizes of the number
-enum PackedType
+enum PackedSize
 {
     PT_UINT8 = 8,
     PT_UINT16 = 16,
@@ -27,7 +27,7 @@ class PackedNum
 {
 public:
     // the size of the number
-    PackedType type = PT_UINT8;
+    PackedSize type = PT_UINT8;
     // the number
     void *num;
     // the encoding for the number
@@ -41,7 +41,7 @@ public:
 
     // PackedNum constructor
     // - t: the size of the number
-    PackedNum(PackedType t = PT_UINT8);
+    PackedNum(PackedSize t = PT_UINT8);
     // PackedNum constructor
     // - n: the number, sets the type to PT_UINT8
     PackedNum(uint8_t n);
