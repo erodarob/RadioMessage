@@ -9,15 +9,15 @@ GSData::GSData(uint8_t streamType, uint8_t streamId, uint8_t deviceId, uint8_t *
 
 bool GSData::decodeGSMHeader(char *header, int length, uint32_t &bitrate)
 {
-    if (length < (int)sizeof(staticGSMHeader) - 1)
+    if (length < (int)sizeof(GSData::staticGSMHeader) - 1)
         return false; // Error: header data not big enough
-    int findHeader = memcmp(header, GSData::staticGSMHeader, sizeof(staticGSMHeader) - 1);
+    int findHeader = memcmp(header, GSData::staticGSMHeader, sizeof(GSData::staticGSMHeader) - 1);
     if (findHeader == 0)
     {
-        if (length - (sizeof(staticGSMHeader) - 1) >= sizeof(uint32_t))
+        if (length - (sizeof(GSData::staticGSMHeader) - 1) >= sizeof(uint32_t))
         {
             uint8_t bitrateData[4] = {0, 0, 0, 0};
-            memcpy(bitrateData, header + sizeof(staticGSMHeader) - 1, sizeof(uint32_t));
+            memcpy(bitrateData, header + sizeof(GSData::staticGSMHeader) - 1, sizeof(uint32_t));
             bitrate += bitrateData[0] << 24;
             bitrate += bitrateData[1] << 16;
             bitrate += bitrateData[2] << 8;
@@ -32,13 +32,13 @@ bool GSData::encodeGSMHeader(char *header, int length, uint32_t bitrate)
 {
     if (length < GSData::gsmHeaderSize)
         return false;
-    memcpy(header, staticGSMHeader, sizeof(staticGSMHeader) - 1);
+    memcpy(header, GSData::staticGSMHeader, sizeof(GSData::staticGSMHeader) - 1);
     uint8_t bitrateData[4] = {0, 0, 0, 0};
     bitrateData[0] = (bitrate & 0xff000000) >> 24;
     bitrateData[1] = (bitrate & 0x00ff0000) >> 16;
     bitrateData[2] = (bitrate & 0x0000ff00) >> 8;
     bitrateData[3] = (bitrate & 0x000000ff) >> 0;
-    memcpy(header + sizeof(staticGSMHeader) - 1, bitrateData, sizeof(bitrateData));
+    memcpy(header + sizeof(GSData::staticGSMHeader) - 1, bitrateData, sizeof(bitrateData));
     return true;
 }
 
