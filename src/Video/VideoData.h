@@ -7,7 +7,7 @@ class VideoData : public Data
 {
 public:
     // the maximum size of the data
-    static const uint16_t maxSize = 2000;
+    static const uint16_t maxSize = 0x1FFF;
     // VideoData type
     static const uint8_t type = 0x04;
 
