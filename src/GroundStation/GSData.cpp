@@ -1,5 +1,8 @@
 #include "GSData.h"
 
+constexpr uint8_t GSData::headerEncoding[];
+constexpr char GSData::staticGSMHeader[];
+
 GSData::GSData(uint8_t streamType, uint8_t streamId, uint8_t deviceId) : dataType(streamType), id(streamId), deviceId(deviceId) {}
 
 GSData::GSData(uint8_t streamType, uint8_t streamId, uint8_t deviceId, uint8_t *buf, uint16_t size) : dataType(streamType), id(streamId), deviceId(deviceId)
