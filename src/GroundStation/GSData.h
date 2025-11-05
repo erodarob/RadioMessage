@@ -8,11 +8,11 @@ class GSData : public Data
 {
 public:
     // maximum total message size
-    static const uint16_t maxSize = 0x0FFF;
+    static const uint16_t maxSize = 0xFFFF;
     // size of the header
     static const uint8_t headerLen = 3;
     // the PackedNum encoding used by the header
-    static constexpr uint8_t headerEncoding[] = {4, 4, 4, 4, 8};
+    static constexpr uint8_t headerEncoding[] = {4, 4, 8, 8};
     // size of header encoding
     static const uint8_t headerEncodingLength = sizeof(headerEncoding);
     // the header for Ground Station Muxer (gsm) files, format: (version)GroundStationMuxer(bitrate)\n
@@ -26,8 +26,6 @@ public:
     uint8_t dataType = 0x00;
     // the multiplexing id of the message, max 0xF
     uint8_t id = 0x00;
-    // the id of the hardware the message came from (e.g., the id of the radio), max 0xF
-    uint8_t deviceId = 0x00;
     // size of message, second and third bytes of header
     uint16_t size = 0x0000; // length of the message (4095 btyes should be enough)
     // stores the header for this message in the order dataType, id, deviceId, size (first 4), size (last 8)
@@ -42,7 +40,7 @@ public:
     // - type : the type of the message
     // - id : the multiplexing id of the message
     // - deviceId: the id for the hardware
-    GSData(uint8_t streamType, uint8_t streamId, uint8_t deviceId);
+    GSData(uint8_t streamType, uint8_t streamId);
 
     // GSData constructor
     // - type : the type of the message
@@ -50,17 +48,29 @@ public:
     // - deviceId: the id for the hardware
     // - buf : the data for the message
     // - size : the size of the data
-    GSData(uint8_t streamType, uint8_t streamId, uint8_t deviceId, uint8_t *buf, uint16_t size);
+    GSData(uint8_t streamType, uint8_t streamId, uint8_t *buf, uint16_t size);
 
+    // decode Ground Station Multiplexer (GSM) header from ```header``` with length ```length```, with data bitrate placed into ```bitrate```
+    // returns whether decoding was successful
     static bool decodeGSMHeader(char *header, int length, uint32_t &bitrate);
+    // encoded GSM header into ```header``` with max length ```length```, with data bitrate  ```bitrate```
+    // returns whether encoding was successful
     static bool encodeGSMHeader(char *header, int length, uint32_t bitrate);
 
-    static bool decodeHeader(uint32_t header, uint8_t &streamType, uint8_t &streamId, uint8_t &deviceId, uint16_t &size);
+    // decode GSData header ```header```, and place the results into ```streamType```, ```streamId```, and ```size```
+    // returns whether decoding was successful
+    static bool decodeHeader(uint32_t header, uint8_t &streamType, uint8_t &streamId, uint16_t &size);
+    // decode GSData header ```header```, and place the results into ```streamType```, ```streamId```, and ```size```
     // header assumed to contain at least GSData::headerLen bytes
-    static bool decodeHeader(uint8_t *header, uint8_t &streamType, uint8_t &streamId, uint8_t &deviceId, uint16_t &size);
+    // returns whether decoding was successful
+    static bool decodeHeader(uint8_t *header, uint8_t &streamType, uint8_t &streamId, uint16_t &size);
 
+    // decode GSData header ```header```, and place the results into this object
+    // returns whether decoding was successful
     bool decodeHeader(uint32_t header);
+    // decode GSData header ```header```, and place the results into this object
     // header assumed to contain at least GSData::headerLen bytes
+    // returns whether decoding was successful
     bool decodeHeader(uint8_t *header);
 
     // encode the data stored in the ```Data``` object and place the result in ```data```

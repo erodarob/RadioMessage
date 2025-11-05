@@ -3,9 +3,9 @@
 constexpr uint8_t GSData::headerEncoding[];
 constexpr char GSData::staticGSMHeader[];
 
-GSData::GSData(uint8_t streamType, uint8_t streamId, uint8_t deviceId) : dataType(streamType), id(streamId), deviceId(deviceId) {}
+GSData::GSData(uint8_t streamType, uint8_t streamId) : dataType(streamType), id(streamId) {}
 
-GSData::GSData(uint8_t streamType, uint8_t streamId, uint8_t deviceId, uint8_t *buf, uint16_t size) : dataType(streamType), id(streamId), deviceId(deviceId)
+GSData::GSData(uint8_t streamType, uint8_t streamId, uint8_t *buf, uint16_t size) : dataType(streamType), id(streamId)
 {
     this->fill(buf, size);
 }
@@ -45,15 +45,14 @@ bool GSData::encodeGSMHeader(char *header, int length, uint32_t bitrate)
     return true;
 }
 
-bool GSData::decodeHeader(uint32_t header, uint8_t &streamType, uint8_t &streamId, uint8_t &deviceId, uint16_t &size)
+bool GSData::decodeHeader(uint32_t header, uint8_t &streamType, uint8_t &streamId, uint16_t &size)
 {
     // header
-    // TIDSss
-    // T = type
-    // I = id
-    // D = deviceId
-    // S = size first 4
-    // ss = size last 8
+    // TISSss
+    // T = type (4 bits)
+    // I = id (4 bits)
+    // SS = size (first 8 bits)
+    // ss = size (last 8 bites)
     // create a PackedNum to decode the header
     PackedNum packedHeader(GSData::headerEncoding, GSData::headerEncodingLength);
     packedHeader.set(header);
@@ -66,22 +65,20 @@ bool GSData::decodeHeader(uint32_t header, uint8_t &streamType, uint8_t &streamI
         // set all variables according to where data is stored
         streamType = headerData[0];
         streamId = headerData[1];
-        deviceId = headerData[2];
-        size = headerData[3] << 8;
-        size += headerData[4];
+        size = headerData[2] << 8;
+        size += headerData[3];
     }
     return success;
 }
 
-bool GSData::decodeHeader(uint8_t *header, uint8_t &streamType, uint8_t &streamId, uint8_t &deviceId, uint16_t &size)
+bool GSData::decodeHeader(uint8_t *header, uint8_t &streamType, uint8_t &streamId, uint16_t &size)
 {
     // header
-    // TIDSss
-    // T = type
-    // I = id
-    // D = deviceId
-    // S = size first 4
-    // ss = size last 8
+    // TISSss
+    // T = type (4 bits)
+    // I = id (4 bits)
+    // SS = size (first 8 bits)
+    // ss = size (last 8 bites)
     // create a PackedNum to decode the header
     PackedNum packedHeader(GSData::headerEncoding, GSData::headerEncodingLength);
     packedHeader.set(header);
@@ -94,9 +91,8 @@ bool GSData::decodeHeader(uint8_t *header, uint8_t &streamType, uint8_t &streamI
         // set all variables according to where data is stored
         streamType = headerData[0];
         streamId = headerData[1];
-        deviceId = headerData[2];
-        size = headerData[3] << 8;
-        size += headerData[4];
+        size = headerData[2] << 8;
+        size += headerData[3];
     }
     return true;
 }
@@ -104,12 +100,11 @@ bool GSData::decodeHeader(uint8_t *header, uint8_t &streamType, uint8_t &streamI
 bool GSData::decodeHeader(uint32_t header)
 {
     // header
-    // TIDSss
-    // T = type
-    // I = id
-    // D = deviceId
-    // S = size first 4
-    // ss = size last 8
+    // TISSss
+    // T = type (4 bits)
+    // I = id (4 bits)
+    // SS = size (first 8 bits)
+    // ss = size (last 8 bites)
     this->header.set(header);
     // unpack the data
     uint8_t headerData[GSData::headerEncodingLength] = {0};
@@ -120,9 +115,8 @@ bool GSData::decodeHeader(uint32_t header)
         // set all variables according to where data is stored
         this->dataType = headerData[0];
         this->id = headerData[1];
-        this->deviceId = headerData[2];
-        this->size = headerData[3] << 8;
-        this->size += headerData[4];
+        this->size = headerData[2] << 8;
+        this->size += headerData[3];
     }
     return success;
 }
@@ -130,12 +124,11 @@ bool GSData::decodeHeader(uint32_t header)
 bool GSData::decodeHeader(uint8_t *header)
 {
     // header
-    // TIDSss
-    // T = type
-    // I = id
-    // D = deviceId
-    // S = size first 4
-    // ss = size last 8
+    // TISSss
+    // T = type (4 bits)
+    // I = id (4 bits)
+    // SS = size (first 8 bits)
+    // ss = size (last 8 bites)
     this->header.set(header);
     // unpack the data
     uint8_t headerData[GSData::headerEncodingLength] = {0};
@@ -146,9 +139,8 @@ bool GSData::decodeHeader(uint8_t *header)
         // set all variables according to where data is stored
         this->dataType = headerData[0];
         this->id = headerData[1];
-        this->deviceId = headerData[2];
-        this->size = headerData[3] << 8;
-        this->size += headerData[4];
+        this->size = headerData[2] << 8;
+        this->size += headerData[3];
     }
     return success;
 }
@@ -160,13 +152,12 @@ uint16_t GSData::encode(uint8_t *data, uint16_t sz)
         return 0; // error data too small for header
 
     // header
-    // TIDSss
-    // T = type
-    // I = id
-    // D = deviceId
-    // S = size first 4
-    // ss = size last 8
-    uint8_t headerData[] = {this->dataType, this->id, this->deviceId, (uint8_t)(this->size >> 8), (uint8_t)(this->size & 0xFF)};
+    // TISSss
+    // T = type (4 bits)
+    // I = id (4 bits)
+    // SS = size (first 8 bits)
+    // ss = size (last 8 bites)
+    uint8_t headerData[] = {this->dataType, this->id, (uint8_t)(this->size >> 8), (uint8_t)(this->size & 0xFF)};
     header.pack(headerData);
     // place header in data
     header.get(data);
@@ -191,12 +182,11 @@ uint16_t GSData::decode(uint8_t *data, uint16_t sz)
         return 0; // error data too small for header
 
     // header
-    // TIDSss
-    // T = type
-    // I = id
-    // D = deviceId
-    // S = size first 4
-    // ss = size last 8
+    // TISSss
+    // T = type (4 bits)
+    // I = id (4 bits)
+    // SS = size (first 8 bits)
+    // ss = size (last 8 bites)
     this->decodeHeader(data);
 
     pos += GSData::headerLen;
