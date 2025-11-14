@@ -269,17 +269,17 @@ uint16_t GSData::fromJSON(char *json, uint16_t sz, int &deviceId)
 {
     // strings to store data in
     char deviceIdStr[5] = {0};
-    char idTxt[10] = {0};
+    char idStr[10] = {0};
 
     // extract each string
     if (!extractStr(json, sz, "\"deviceId\":", ',', deviceIdStr))
         return 0;
-    if (!extractStr(json, sz, "\"index\":", ',', idTxt, 3))
+    if (!extractStr(json, sz, "\"id\":", ',', idStr, 3))
         return 0;
 
     // convert to correct data type
     deviceId = atoi(deviceIdStr);
-    this->id = atoi(idTxt);
+    this->id = atoi(idStr);
 
     // need to manually extract buf (instead of using extractStr) since it is an array
     char *dataStrPos = strstr(json, "\"buf\":[");

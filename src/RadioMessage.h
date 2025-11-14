@@ -10,16 +10,20 @@
 #include "Message.h"
 
 #include "Data.h"
-// pull Video classes
-#include "Video/VideoData.h"
 // pull APRS classes
 #include "APRS/APRSData.h"
 #include "APRS/APRSTelem.h"
 #include "APRS/APRSCmd.h"
 #include "APRS/APRSText.h"
+// pull Astra classes
+// #include "Astra/AstraData.h"
 // pull GroundStation classes
+#include "GroundStation/GSControl.h"
 #include "GroundStation/GSData.h"
 #include "GroundStation/Metrics.h"
+// pull Raw classes
+#include "Raw/GenericData.h"
+#include "Raw/VideoData.h"
 // pull Types
 #include "Types/PackedNum.h"
 

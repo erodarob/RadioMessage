@@ -56,11 +56,13 @@ public:
     // Note: modified when message is decoded
     APRSConfig config;
 
+    // APRSData default constructor
     APRSData() : config((APRSConfig){"",
                                      "",
                                      "",
                                      '\0',
                                      '\0'}) {};
+    // For some reason intellisense says there's an error above, but it compiles so ¯\_(ツ)_/¯
 
     // APRSData constructor
     // - cfg : the APRS config to use

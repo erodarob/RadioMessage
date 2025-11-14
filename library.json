@@ -1,6 +1,6 @@
 {
     "name": "Message",
-    "version": "0.1.1",
+    "version": "0.2.1",
     "description": "A library to handle encoding and decoding various types of messages",
     "authors":
     [

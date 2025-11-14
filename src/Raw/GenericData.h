@@ -1,32 +1,32 @@
-#ifndef VIDEODATA_H
-#define VIDEODATA_H
+#ifndef GENERICDATA_H
+#define GENERICDATA_H
 
 #include "../Data.h"
 
-class VideoData : public Data
+class GenericData : public Data
 {
 public:
     // the maximum size of the data
     static const uint16_t maxSize = 0x1FFF;
-    // VideoData type
-    static const uint8_t type = 0x04;
+    // GenericData type
+    static const uint8_t type = 0x07;
 
     // the size of the data
     uint16_t size = 0;
     // buffer to store the data
     uint8_t data[maxSize] = {0};
 
-    // VideoData default constructor
-    VideoData() {};
+    // GenericData default constructor
+    GenericData() {};
 
-    // VideoData constructor
+    // GenericData constructor
     // - data : the data to be encoded, assumed to be ```maxSize```
-    VideoData(uint8_t *data);
+    GenericData(uint8_t *data);
 
-    // VideoData constructor
+    // GenericData constructor
     // - data : the data to be encoded
     // - sz : the size of the data
-    VideoData(uint8_t *data, uint16_t sz);
+    GenericData(uint8_t *data, uint16_t sz);
 
     // encode the data stored in the ```Data``` object and place the result in ```data```, ```sz``` is the max size of ```data```
     uint16_t encode(uint8_t *data, uint16_t sz) override;

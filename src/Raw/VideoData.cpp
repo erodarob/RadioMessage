@@ -1,31 +1,27 @@
 #include "VideoData.h"
 
-VideoData::VideoData(uint8_t *data)
+VideoData::VideoData(VideoEncoding encoding) : encoding(encoding)
 {
-    // copy maxSize bytes from data into internal buffer
-    memcpy(this->data, data, this->maxSize);
-    this->size = this->maxSize;
 }
 
-VideoData::VideoData(uint8_t *data, uint16_t sz)
+VideoData::VideoData(uint8_t *data, VideoEncoding encoding) : encoding(encoding), GenericData(data)
 {
-    // make sure size is not too big
-    if (sz > this->maxSize)
-        this->size = this->maxSize;
-    else
-        this->size = sz;
-    // copy size bytes into internal buffer
-    memcpy(this->data, data, this->size);
+}
+
+VideoData::VideoData(uint8_t *data, uint16_t sz, VideoEncoding encoding) : encoding(encoding), GenericData(data, sz)
+{
 }
 
 uint16_t VideoData::encode(uint8_t *data, uint16_t sz)
 {
     // make sure the provided array size is long enough
-    if (sz >= this->maxSize)
+    if (sz >= this->size + 1)
     {
+        // copy the encoding
+        data[0] = encoding;
         // copy the data
-        memcpy(data, this->data, this->maxSize);
-        return this->maxSize;
+        memcpy(data + 1, this->data, this->size);
+        return this->size + 1;
     }
     return 0;
 }
@@ -37,14 +33,24 @@ uint16_t VideoData::decode(uint8_t *data, uint16_t sz)
         this->size = this->maxSize;
     else
         this->size = sz;
+    // get encoding
+    // assume NONE is the last value in the VideoEncoding enum
+    if (data[0] > NONE)
+        // there is not an enum for this, so set to none
+        encoding = NONE;
+    else
+        // get the encoding normally
+        encoding = (VideoEncoding)data[0];
     // copy data into internal buffer
-    memcpy(this->data, data, sz);
+    memcpy(this->data, data + 1, sz - 1);
     return sz;
 }
 
 uint16_t VideoData::toJSON(char *json, uint16_t sz, int deviceId)
 {
-    uint16_t result = (uint16_t)snprintf(json, sz, "{\"type\":\"VideoData\",\"deviceId\":%d,\"data\":{\"data\":[", deviceId);
+    char encodingStr[10] = {0};
+    this->getEncodingStr(encodingStr, sizeof(encodingStr));
+    uint16_t result = (uint16_t)snprintf(json, sz, "{\"type\":\"VideoData\",\"deviceId\":%d,\"data\":{\"encoding\":\"%s\", \"data\":[", deviceId, encodingStr);
 
     if (result >= sz)
     {
@@ -95,16 +101,24 @@ uint16_t VideoData::fromJSON(char *json, uint16_t sz, int &deviceId)
 {
     // strings to store data in
     char deviceIdStr[5] = {0};
+    char encodingStr[10] = {0};
 
     // extract each string
     if (!extractStr(json, sz, "\"deviceId\":", ',', deviceIdStr))
         return 0;
+    if (!extractStr(json, sz, "\"encoding\":", ',', encodingStr))
+        return 0;
+
+    // set encoding
+    this->setEncoding(encodingStr, sizeof(encodingStr));
 
     // convert to correct data type
     deviceId = atoi(deviceIdStr);
 
     // need to manually extract data (instead of using extractStr) since it is an array
-    char *dataStrPos = strstr(json, "{\"data\":[");
+    char *dataStrPos = strstr(json, "\"data\":[");
+    if (dataStrPos == nullptr)
+        return 0;
     int current = int(dataStrPos - json) + 10; // add 10 to move to the "["
     this->size = 0;
 
@@ -125,5 +139,52 @@ uint16_t VideoData::fromJSON(char *json, uint16_t sz, int &deviceId)
         this->size++;
         current++;
     }
+
     return this->size;
+}
+
+void VideoData::getEncodingStr(char *str, int sz)
+{
+    if (sz < 6)
+    {
+        sz = 0;
+        return;
+    }
+    switch (this->encoding)
+    {
+    case AV1:
+        memcpy(str, "AV1", sizeof("AV1"));
+        sz = sizeof("AV1");
+        break;
+    case H264:
+        memcpy(str, "H.264", sizeof("H.264"));
+        sz = sizeof("H.264");
+        break;
+    case H265:
+        memcpy(str, "H.265", sizeof("H.265"));
+        sz = sizeof("H.265");
+        break;
+    case RAW:
+        memcpy(str, "RAW", sizeof("RAW"));
+        sz = sizeof("RAW");
+        break;
+    default:
+        memcpy(str, "NONE", sizeof("NONE"));
+        sz = sizeof("NONE");
+        break;
+    }
+}
+
+void VideoData::setEncoding(char *str, int sz)
+{
+    if (strcmp(str, "AV1") == 0)
+        this->encoding = AV1;
+    else if (strcmp(str, "H.264") == 0)
+        this->encoding = H264;
+    else if (strcmp(str, "H.265") == 0)
+        this->encoding = H265;
+    else if (strcmp(str, "RAW") == 0)
+        this->encoding = RAW;
+    else
+        this->encoding = NONE;
 }

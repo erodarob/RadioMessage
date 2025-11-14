@@ -177,7 +177,7 @@ uint16_t APRSTelem::fromJSON(char *json, uint16_t sz, int &deviceId)
         return 0;
     if (!extractStr(json, sz, "\"hdg\":", ',', hdg, 14))
         return 0;
-    if (!extractStr(json, sz, "\"stateflags\":\"", '"', sf, 11))
+    if (!extractStr(json, sz, "\"stateFlags\":\"", '"', sf, 11))
         return 0;
 
     // convert to correct data type

@@ -8,7 +8,7 @@ class GSData : public Data
 {
 public:
     // maximum total message size
-    static const uint16_t maxSize = 0xFFFF;
+    static const uint16_t maxSize = 0x1FFF + 3;
     // size of the header
     static const uint8_t headerLen = 3;
     // the PackedNum encoding used by the header
@@ -27,7 +27,7 @@ public:
     // the multiplexing id of the message, max 0xF
     uint8_t id = 0x00;
     // size of message, second and third bytes of header
-    uint16_t size = 0x0000; // length of the message (4095 btyes should be enough)
+    uint16_t size = 0x0000; // length of the message (10000 btyes should be enough)
     // stores the header for this message in the order dataType, id, deviceId, size (first 4), size (last 8)
     PackedNum header = {headerEncoding, headerEncodingLength};
     // buffer to store message data (not including header)

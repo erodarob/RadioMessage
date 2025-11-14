@@ -8,7 +8,7 @@ class Metrics : public Data
 {
 public:
     // Metrics type
-    static const uint8_t type = 0x05;
+    static const uint8_t type = 0x02;
     // the total length in bytes of the encoded data
     static const uint8_t dataLen = 1 + 4 + 2;
 
