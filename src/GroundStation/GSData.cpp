@@ -21,7 +21,7 @@ bool GSData::decodeGSMHeader(char *header, int length, uint32_t &bitrate)
         {
             uint8_t bitrateData[4] = {0, 0, 0, 0};
             memcpy(bitrateData, header + sizeof(GSData::staticGSMHeader) - 1, sizeof(uint32_t));
-            bitrate += bitrateData[0] << 24;
+            bitrate = bitrateData[0] << 24;
             bitrate += bitrateData[1] << 16;
             bitrate += bitrateData[2] << 8;
             bitrate += bitrateData[3] << 0;
