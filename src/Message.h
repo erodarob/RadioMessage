@@ -16,6 +16,7 @@ using namespace std;
 class Message
 {
 public:
+    static const int ERR_ID = -0;
     // maximum message size
     static const uint16_t maxSize = 10e3;
 
@@ -35,7 +36,7 @@ public:
     // - rawData : an encoded message
     // - sz : the size of the encoded message
     // - sep : the separation character when combining multiple messages
-    Message(uint8_t rawData[maxSize], uint16_t sz, char sep = 0);
+    Message(uint8_t *rawData, uint16_t sz, char sep = 0);
 
     // Message constructor
     // - data : a ```Data``` object that will be encoded into the Message buffer
@@ -77,6 +78,10 @@ public:
     // copies from the Message buffer into ```data``` starting from index ```start``` until index ```end```, sets ```sz``` to the number of bytes copied
     Message *get(uint8_t *data, uint16_t &sz, uint16_t start, uint16_t end);
 
+    // error handling
+    bool hasError();
+    char *errors();
+
 #ifdef ARDUINO
     // prints the contents of the message over ```Serial```
     // Note: video not supported
@@ -94,6 +99,12 @@ public:
     // Note: video supported
     Message *write();
 #endif
+
+private:
+    bool err = false;
+    char errStr[32] = {0};
+
+    void error(int err);
 };
 
 #endif

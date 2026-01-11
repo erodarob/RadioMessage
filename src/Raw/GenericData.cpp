@@ -18,7 +18,7 @@ GenericData::GenericData(uint8_t *data, uint16_t sz)
     memcpy(this->data, data, this->size);
 }
 
-uint16_t GenericData::encode(uint8_t *data, uint16_t sz)
+int GenericData::encode(uint8_t *data, uint16_t sz)
 {
     // make sure the provided array size is long enough
     if (sz >= this->size)
@@ -27,10 +27,10 @@ uint16_t GenericData::encode(uint8_t *data, uint16_t sz)
         memcpy(data, this->data, this->size);
         return this->size;
     }
-    return 0;
+    return GenericData::ERR_ID - 1;
 }
 
-uint16_t GenericData::decode(uint8_t *data, uint16_t sz)
+int GenericData::decode(uint8_t *data, uint16_t sz)
 {
     // make sure size is not too big
     if (sz > this->maxSize)
@@ -42,14 +42,14 @@ uint16_t GenericData::decode(uint8_t *data, uint16_t sz)
     return sz;
 }
 
-uint16_t GenericData::toJSON(char *json, uint16_t sz, int deviceId)
+int GenericData::toJSON(char *json, uint16_t sz, int deviceId)
 {
     uint16_t result = (uint16_t)snprintf(json, sz, "{\"type\":\"GenericData\",\"deviceId\":%d,\"data\":{\"data\":[", deviceId);
 
     if (result >= sz)
     {
         // output too large
-        return 0;
+        return GenericData::ERR_ID - 2;
     }
 
     // result should be the index of the [
@@ -63,10 +63,10 @@ uint16_t GenericData::toJSON(char *json, uint16_t sz, int deviceId)
             if (added > 0 && result + added < sz)
                 result += added;
             else
-                return 0; // output too large
+                return GenericData::ERR_ID - 3; // output too large
         }
         else
-            return 0; // output too large
+            return GenericData::ERR_ID - 4; // output too large
     }
 
     // result should be the index of \0
@@ -88,17 +88,17 @@ uint16_t GenericData::toJSON(char *json, uint16_t sz, int deviceId)
     }
 
     // output too large
-    return 0;
+    return GenericData::ERR_ID - 5;
 }
 
-uint16_t GenericData::fromJSON(char *json, uint16_t sz, int &deviceId)
+int GenericData::fromJSON(char *json, uint16_t sz, int &deviceId)
 {
     // strings to store data in
     char deviceIdStr[5] = {0};
 
     // extract each string
     if (!extractStr(json, sz, "\"deviceId\":", ',', deviceIdStr))
-        return 0;
+        return GenericData::ERR_ID - 6;
 
     // convert to correct data type
     deviceId = atoi(deviceIdStr);
@@ -125,5 +125,5 @@ uint16_t GenericData::fromJSON(char *json, uint16_t sz, int &deviceId)
         this->size++;
         current++;
     }
-    return this->size;
+    return sz;
 }

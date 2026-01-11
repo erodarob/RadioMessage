@@ -145,11 +145,11 @@ bool GSData::decodeHeader(uint8_t *header)
     return success;
 }
 
-uint16_t GSData::encode(uint8_t *data, uint16_t sz)
+int GSData::encode(uint8_t *data, uint16_t sz)
 {
     uint16_t pos = 0;
     if (sz < pos + GSData::headerLen)
-        return 0; // error data too small for header
+        return GSData::ERR_ID - 1; // error data too small for header
 
     // header
     // TISSss
@@ -165,7 +165,7 @@ uint16_t GSData::encode(uint8_t *data, uint16_t sz)
     pos += GSData::headerLen;
 
     if (sz < pos + this->size)
-        return 0; // not enough room for data
+        return GSData::ERR_ID - 2; // not enough room for data
 
     // body
     memcpy(data + pos, this->buf, this->size);
@@ -173,13 +173,13 @@ uint16_t GSData::encode(uint8_t *data, uint16_t sz)
     return pos + this->size;
 }
 
-uint16_t GSData::decode(uint8_t *data, uint16_t sz)
+int GSData::decode(uint8_t *data, uint16_t sz)
 {
     uint16_t pos = 0;
     if (sz > GSData::maxSize)
-        return 0; // error data too big
+        return GSData::ERR_ID - 3; // error data too big
     if (sz < pos + GSData::headerLen)
-        return 0; // error data too small for header
+        return GSData::ERR_ID - 4; // error data too small for header
 
     // header
     // TISSss
@@ -187,12 +187,13 @@ uint16_t GSData::decode(uint8_t *data, uint16_t sz)
     // I = id (4 bits)
     // SS = size (first 8 bits)
     // ss = size (last 8 bites)
-    this->decodeHeader(data);
+    if (!this->decodeHeader(data))
+        return GSData::ERR_ID - 5;
 
     pos += GSData::headerLen;
 
     if (sz < pos + 1)
-        return 0; // no data available
+        return GSData::ERR_ID - 6; // no data available
 
     // body
     memcpy(this->buf, data + pos, this->size);
@@ -217,13 +218,13 @@ GSData *GSData::fill(uint8_t *buf, uint16_t size)
     return this;
 }
 
-uint16_t GSData::toJSON(char *json, uint16_t sz, int deviceId)
+int GSData::toJSON(char *json, uint16_t sz, int deviceId)
 {
     uint16_t result = (uint16_t)snprintf(json, sz, "{\"type\":\"GSData\",\"deviceId\":%d,\"data\":{\"id\":%d,\"buf\":[", deviceId, this->id);
     if (result >= sz)
     {
         // output too large
-        return 0;
+        return GSData::ERR_ID - 7;
     }
 
     // result should be the index of the \0
@@ -237,10 +238,10 @@ uint16_t GSData::toJSON(char *json, uint16_t sz, int deviceId)
             if (added > 0 && result + added < sz)
                 result += added;
             else
-                return 0; // output too large
+                return GSData::ERR_ID - 8; // output too large
         }
         else
-            return 0; // output too large
+            return GSData::ERR_ID - 9; // output too large
     }
 
     // result should be the index of \0
@@ -262,10 +263,10 @@ uint16_t GSData::toJSON(char *json, uint16_t sz, int deviceId)
     }
 
     // output too large
-    return 0;
+    return GSData::ERR_ID - 10;
 }
 
-uint16_t GSData::fromJSON(char *json, uint16_t sz, int &deviceId)
+int GSData::fromJSON(char *json, uint16_t sz, int &deviceId)
 {
     // strings to store data in
     char deviceIdStr[5] = {0};
@@ -273,9 +274,9 @@ uint16_t GSData::fromJSON(char *json, uint16_t sz, int &deviceId)
 
     // extract each string
     if (!extractStr(json, sz, "\"deviceId\":", ',', deviceIdStr))
-        return 0;
+        return GSData::ERR_ID - 11;
     if (!extractStr(json, sz, "\"id\":", ',', idStr, 3))
-        return 0;
+        return GSData::ERR_ID - 12;
 
     // convert to correct data type
     deviceId = atoi(deviceIdStr);
@@ -303,5 +304,5 @@ uint16_t GSData::fromJSON(char *json, uint16_t sz, int &deviceId)
         this->size++;
         current++;
     }
-    return this->size;
+    return sz;
 }

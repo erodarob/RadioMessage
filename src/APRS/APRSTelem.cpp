@@ -27,12 +27,15 @@ bool APRSTelem::getStateFlags(uint8_t *flags)
     return this->stateFlags.unpack(flags);
 }
 
-uint16_t APRSTelem::encode(uint8_t *data, uint16_t sz)
+int APRSTelem::encode(uint8_t *data, uint16_t sz)
 {
     uint16_t pos = 0;
 
     // APRS header
-    this->encodeHeader(data, sz, pos);
+    int err = this->encodeHeader(data, sz, pos);
+    // check for errors
+    if (err < 0)
+        return APRSTelem::ERR_ID + err;
 
     // telemetry ("!MYYYYXXXX^ hhssaaoooooofffff")
     // ! = message type     hh = heading
@@ -43,10 +46,10 @@ uint16_t APRSTelem::encode(uint8_t *data, uint16_t sz)
 
     // lat/long
     if (sz < pos + 11)
-        return 0; // error too small for lat/long
+        return APRSTelem::ERR_ID - 10; // error too small for lat/long
 
     if (this->config.type != PositionWithoutTimestampWithoutAPRS)
-        return 0; // error wrong type, only formatted for PositionWithoutTimestampWithoutAPRS
+        return APRSTelem::ERR_ID - 11; // error wrong type, only formatted for PositionWithoutTimestampWithoutAPRS
 
     data[pos++] = this->config.type;
     data[pos++] = this->config.overlay;
@@ -57,7 +60,7 @@ uint16_t APRSTelem::encode(uint8_t *data, uint16_t sz)
 
     // heading, speed, alt
     if (sz < pos + 2 + 2 + 3)
-        return 0; // error too small for heading, speed, and alt
+        return APRSTelem::ERR_ID - 12; // error too small for heading, speed, and alt
 
     numtoBase91(data, pos, (int)(this->hdg * HDG_SCALE), 2);                // (91^2/360) scale to fit in 2 base91 characters
     numtoBase91(data, pos, (int)(this->spd * SPD_SCALE), 2);                // (91^2/1000) scale to fit in 2 base91 characters. 1000 knots is the assumed max speed.
@@ -65,7 +68,7 @@ uint16_t APRSTelem::encode(uint8_t *data, uint16_t sz)
 
     // orientation
     if (sz < pos + 2 + 2 + 2)
-        return 0; // error too small for orientation
+        return APRSTelem::ERR_ID - 13; // error too small for orientation
 
     numtoBase91(data, pos, (int)(this->orient[0] * ORIENTATION_SCALE), 2); // (91^2/360) scale to fit in 2 base91 characters
     numtoBase91(data, pos, (int)(this->orient[1] * ORIENTATION_SCALE), 2);
@@ -73,7 +76,7 @@ uint16_t APRSTelem::encode(uint8_t *data, uint16_t sz)
 
     // state info
     if (sz < pos + 5)
-        return 0; // error too small for state flags
+        return APRSTelem::ERR_ID - 14; // error too small for state flags
 
     // max value is 4294967295, so we need 5 base 91 (or 8 hex) digits to represent it
     numtoBase91(data, pos, this->stateFlags.get(), 5);
@@ -81,12 +84,15 @@ uint16_t APRSTelem::encode(uint8_t *data, uint16_t sz)
     return pos;
 }
 
-uint16_t APRSTelem::decode(uint8_t *data, uint16_t sz)
+int APRSTelem::decode(uint8_t *data, uint16_t sz)
 {
     uint16_t pos = 0;
     uint32_t decodedNum = 0;
 
-    this->decodeHeader(data, sz, pos);
+    int err = this->decodeHeader(data, sz, pos);
+    // check for errors
+    if (err < 0)
+        return APRSTelem::ERR_ID + err;
 
     // telemetry ("!MYYYYXXXX^ hhssaaoooooofffff")
     // ! = message type     hh = heading
@@ -97,7 +103,7 @@ uint16_t APRSTelem::decode(uint8_t *data, uint16_t sz)
 
     // lat/long
     if (sz < pos + 11)
-        return 0; // error too small for lat/long
+        return APRSTelem::ERR_ID - 15; // error too small for lat/long
 
     this->config.type = data[pos++];
     this->config.overlay = data[pos++];
@@ -110,7 +116,7 @@ uint16_t APRSTelem::decode(uint8_t *data, uint16_t sz)
 
     // heading, speed, alt
     if (sz < pos + 2 + 2 + 3)
-        return 0; // error too small for heading, speed, and alt
+        return APRSTelem::ERR_ID - 16; // error too small for heading, speed, and alt
 
     base91toNum(data, pos, decodedNum, 2);
     this->hdg = (double)decodedNum / HDG_SCALE;
@@ -121,7 +127,7 @@ uint16_t APRSTelem::decode(uint8_t *data, uint16_t sz)
 
     // orientation
     if (sz < pos + 2 + 2 + 2)
-        return 0; // error too small for orientation
+        return APRSTelem::ERR_ID - 17; // error too small for orientation
 
     base91toNum(data, pos, decodedNum, 2);
     this->orient[0] = (double)decodedNum / ORIENTATION_SCALE;
@@ -132,7 +138,7 @@ uint16_t APRSTelem::decode(uint8_t *data, uint16_t sz)
 
     // state info
     if (sz < pos + 5)
-        return 0; // error too small for state flags
+        return APRSTelem::ERR_ID - 18; // error too small for state flags
 
     base91toNum(data, pos, decodedNum, 5);
     this->stateFlags.set(decodedNum);
@@ -140,7 +146,7 @@ uint16_t APRSTelem::decode(uint8_t *data, uint16_t sz)
     return pos;
 }
 
-uint16_t APRSTelem::toJSON(char *json, uint16_t sz, int deviceId)
+int APRSTelem::toJSON(char *json, uint16_t sz, int deviceId)
 {
     uint16_t result = (uint16_t)snprintf(json, sz, "{\"type\":\"APRSTelem\",\"deviceId\":%d,\"data\":{\"lat\":%.7lf,\"lng\":%.7lf,\"alt\":%lf,\"spd\":%lf,\"hdg\":%lf,\"orient\":[%lf,%lf,%lf],\"stateFlags\":\"%#lx\"}}", deviceId, this->lat, this->lng, this->alt, this->spd, this->hdg, this->orient[0], this->orient[1], this->orient[2], (uint32_t)this->stateFlags.get());
 
@@ -150,10 +156,10 @@ uint16_t APRSTelem::toJSON(char *json, uint16_t sz, int deviceId)
         return result;
     }
     // output too large
-    return 0;
+    return APRSTelem::ERR_ID - 19;
 }
 
-uint16_t APRSTelem::fromJSON(char *json, uint16_t sz, int &deviceId)
+int APRSTelem::fromJSON(char *json, uint16_t sz, int &deviceId)
 {
     // strings to store data in
     char deviceIdStr[5] = {0};
@@ -166,19 +172,19 @@ uint16_t APRSTelem::fromJSON(char *json, uint16_t sz, int &deviceId)
 
     // extract each string
     if (!extractStr(json, sz, "\"deviceId\":", ',', deviceIdStr))
-        return 0;
+        return APRSTelem::ERR_ID - 20;
     if (!extractStr(json, sz, "\"lat\":", ',', lat, 14))
-        return 0;
+        return APRSTelem::ERR_ID - 21;
     if (!extractStr(json, sz, "\"lng\":", ',', lng, 14))
-        return 0;
+        return APRSTelem::ERR_ID - 22;
     if (!extractStr(json, sz, "\"alt\":", ',', alt, 14))
-        return 0;
+        return APRSTelem::ERR_ID - 23;
     if (!extractStr(json, sz, "\"spd\":", ',', spd, 14))
-        return 0;
+        return APRSTelem::ERR_ID - 24;
     if (!extractStr(json, sz, "\"hdg\":", ',', hdg, 14))
-        return 0;
+        return APRSTelem::ERR_ID - 25;
     if (!extractStr(json, sz, "\"stateFlags\":\"", '"', sf, 11))
-        return 0;
+        return APRSTelem::ERR_ID - 26;
 
     // convert to correct data type
     deviceId = atoi(deviceIdStr);
@@ -205,5 +211,5 @@ uint16_t APRSTelem::fromJSON(char *json, uint16_t sz, int &deviceId)
         orientPos++;
     }
 
-    return 1;
+    return sz;
 }

@@ -80,12 +80,12 @@ int main(int argc, char *argv[])
     // APRSTelem test
     printf("Starting telem test\n");
     APRSConfig config = {"KC3UTM", "ALL", "WIDE1-1", PositionWithoutTimestampWithoutAPRS, '\\', 'M'};
+    APRSConfig config2 = {"KC3UTM", "ALL", "WIDE1-1", PositionWithoutTimestampWithAPRS, '\\', 'M'};
     double orientTest[3] = {1.0, 110.0, 65.0};
     char out[64];
     APRSTelem telem(config, 39.336896667, -77.337067833, 480.0, 0.0, 31.0, orientTest, (uint32_t)0x15abcdef);
-    m.clear();
+    m.clear()->encode(&telem);
 
-    m.encode(&telem);
     printf("%s\n", (char *)m.buf);
     Message m2;
     for (int i = 0; i < 3; i++)
@@ -122,6 +122,13 @@ int main(int argc, char *argv[])
     printf("lng: %lf\n", telemOut.lng);
     printf("orient: %lf %lf %lf\n", telemOut.orient[0], telemOut.orient[1], telemOut.orient[2]);
 
+    // testing errors
+    APRSTelem telemErr(config2, 39.336896667, -77.337067833, 480.0, 0.0, 31.0, orientTest, (uint32_t)0x15abcdef);
+    printf("Data error test: \n");
+    if (m2.clear()->encode(&telemErr)->hasError())
+        printf(m2.errors());
+    m2.print();
+
     /*Expected Output:
     Starting telem test
     KC3UTM>ALL,WIDE1-1:!M:XNe:w7P\ (m!!$dI!8<j1H&<LHZ
@@ -132,13 +139,16 @@ int main(int argc, char *argv[])
     path: WIDE1-1
     overlay: M
     symbol: \
-lat: 39.34
+    lat: 39.34
     lng: -77.34
     alt: 479.99
     spd: 0.00
     hdg: 31.00
     orient: 1.00 109.99 64.99
     flags: 15ABCDEF
+    Error test:
+    !! Error: -411
+    KC3UTM>ALL,WIDE1-1:
     */
 
     // APRSCmd test
@@ -342,6 +352,17 @@ lat: 39.34
     test
     Success (=1): 1
     */
+
+    // more error testing
+    printf("Message error test: \n");
+    if (m.append(nullptr, 10e5)->hasError())
+        printf(m.errors());
+
+    m.append(nullptr, 10e5);
+
+    uint16_t errTestSize = 0;
+    if (m.get(nullptr, errTestSize, 10, 5)->hasError())
+        printf(m.errors());
 
     printf("done\n");
     return 0;

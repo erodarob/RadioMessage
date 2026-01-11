@@ -15,6 +15,8 @@ public:
     static const uint16_t maxArgSize = 200;
     // GSControl type
     static const uint8_t type = 0x01;
+    // type error ID
+    static const int ERR_ID = -type * 100;
 
     // buffer to store message command
     char cmdBuf[maxCmdSize] = {0};
@@ -46,14 +48,14 @@ public:
     bool processCmd(bool (*f)(char *, uint16_t, char **));
 
     // encode the data stored in the ```Data``` object and place the result in ```data```
-    uint16_t encode(uint8_t *data, uint16_t sz) override;
+    int encode(uint8_t *data, uint16_t sz) override;
     // decode the data stored in ```data``` and place it in the ```Data``` object
-    uint16_t decode(uint8_t *data, uint16_t sz) override;
+    int decode(uint8_t *data, uint16_t sz) override;
 
     // place the data in the ```Data``` object in the ```json``` string, ```sz``` is the max size of the string, ```deviceId``` can be set based on hardware
-    uint16_t toJSON(char *json, uint16_t sz, int deviceId) override;
+    int toJSON(char *json, uint16_t sz, int deviceId) override;
     // place the data in the ```json``` string in the ```Data``` object, ```sz``` is the max size of the string, ```deviceId``` can be set based on hardware
-    uint16_t fromJSON(char *json, uint16_t sz, int &deviceId) override;
+    int fromJSON(char *json, uint16_t sz, int &deviceId) override;
 };
 
 #endif

@@ -2,7 +2,7 @@
 
 // constructors
 
-Message::Message(uint8_t data[maxSize], uint16_t sz, char sep) : sep(sep)
+Message::Message(uint8_t *data, uint16_t sz, char sep) : sep(sep)
 {
     // make sure we don't copy more than this->maxSize bytes
     if (sz > this->maxSize)
@@ -15,8 +15,15 @@ Message::Message(uint8_t data[maxSize], uint16_t sz, char sep) : sep(sep)
 
 Message::Message(Data *data, char sep) : sep(sep)
 {
-    // encode the given data
-    this->size = data->encode(this->buf, this->maxSize);
+    // encode the given data, checking for errors
+    int status = data->encode(this->buf, this->maxSize);
+    if (status > 0)
+    {
+        this->size = status;
+        this->buf[this->size] = 0;
+    }
+    else
+        this->error(status);
 }
 
 Message *Message::encode(Data *data, bool append)
@@ -27,21 +34,35 @@ Message *Message::encode(Data *data, bool append)
         if (this->sep != 0 && this->size > 0 && this->size != this->maxSize - 1)
             this->buf[this->size++] = this->sep;
         // encode the message
-        this->size += data->encode(this->buf + this->size, this->maxSize);
-        this->buf[this->size] = 0;
+        int status = data->encode(this->buf + this->size, this->maxSize);
+        if (status > 0)
+        {
+            this->size = status;
+            this->buf[this->size] = 0;
+        }
+        else
+            this->error(status);
     }
     else
     {
         // encode the message
-        this->size = data->encode(this->buf, this->maxSize);
-        this->buf[this->size] = 0;
+        int status = data->encode(this->buf, this->maxSize);
+        if (status > 0)
+        {
+            this->size = status;
+            this->buf[this->size] = 0;
+        }
+        else
+            this->error(status);
     }
     return this;
 }
 
 Message *Message::decode(Data *data)
 {
-    data->decode(this->buf, this->size);
+    int status = data->decode(this->buf, this->size);
+    if (status <= 0)
+        this->error(status);
     return this;
 }
 
@@ -62,6 +83,10 @@ Message *Message::append(uint8_t *data, uint16_t sz)
         this->fill(data, this->size, sz);
         this->buf[this->size] = 0;
     }
+    else
+    {
+        this->error(Message::ERR_ID - 1);
+    }
     return this;
 }
 
@@ -72,7 +97,12 @@ Message *Message::append(uint8_t data)
     {
         // add the data to the end of the buffer
         this->buf[this->size++] = data;
+
         this->buf[this->size] = 0;
+    }
+    else
+    {
+        this->error(Message::ERR_ID - 2);
     }
     return this;
 }
@@ -111,6 +141,7 @@ Message *Message::pop(uint8_t *data, uint16_t &sz)
     else
     {
         sz = 0;
+        this->error(Message::ERR_ID - 3);
     }
     return this;
 }
@@ -153,6 +184,7 @@ Message *Message::shift(uint8_t *data, uint16_t &sz)
     else
     {
         sz = 0;
+        this->error(Message::ERR_ID - 4);
     }
     return this;
 }
@@ -224,8 +256,34 @@ Message *Message::get(uint8_t *data, uint16_t &sz, uint16_t start, uint16_t end)
     else
     {
         sz = 0;
+        this->error(Message::ERR_ID - 5);
     }
     return this;
+}
+
+bool Message::hasError()
+{
+    return this->err;
+}
+
+char *Message::errors()
+{
+    this->err = false;
+    return this->errStr;
+}
+
+void Message::error(int errVal)
+{
+    if (!this->err)
+    {
+        this->err = true;
+        snprintf(errStr, sizeof(errStr), "!! Error: %d\n", errVal);
+    }
+    else
+    {
+        int len = strlen(errStr);
+        snprintf(errStr + len - 1, sizeof(errStr) - len, ", %d\n", errVal);
+    }
 }
 
 #ifdef ARDUINO

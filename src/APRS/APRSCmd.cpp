@@ -17,19 +17,22 @@ bool APRSCmd::getArgs(uint8_t *args)
     return this->args.unpack(args);
 }
 
-uint16_t APRSCmd::encode(uint8_t *data, uint16_t sz)
+int APRSCmd::encode(uint8_t *data, uint16_t sz)
 {
     uint16_t pos = 0;
 
     // APRS header
-    this->encodeHeader(data, sz, pos);
+    int err = this->encodeHeader(data, sz, pos);
+    // check for errors
+    if (err < 0)
+        return APRSCmd::ERR_ID + err;
 
     // command ("ccaaa")
     // cc = command
     // aaa = arguments
 
     if (sz < pos + 5)
-        return 0; // error too small for command
+        return APRSCmd::ERR_ID - 10; // error too small for command
 
     numtoBase91(data, pos, this->cmd, 2);        // this is quite inefficient (2^8 = 256, but we are using 91^2 = 8281 to represent it)
     numtoBase91(data, pos, this->args.get(), 3); // also quite inefficient (2^16 = 65536, but we are using 91^3 = 753571 to represent it)
@@ -37,19 +40,22 @@ uint16_t APRSCmd::encode(uint8_t *data, uint16_t sz)
     return pos;
 }
 
-uint16_t APRSCmd::decode(uint8_t *data, uint16_t sz)
+int APRSCmd::decode(uint8_t *data, uint16_t sz)
 {
     uint16_t pos = 0;
     uint32_t decodedNum = 0;
 
-    this->decodeHeader(data, sz, pos);
+    int err = this->decodeHeader(data, sz, pos);
+    // check for errors
+    if (err < 0)
+        return APRSCmd::ERR_ID + err;
 
     // command ("ccaaa")
     // cc = command
     // aaa = arguments
 
     if (sz < pos + 5)
-        return 0; // error too small for command
+        return APRSCmd::ERR_ID - 11; // error too small for command
 
     // decode command data
     base91toNum(data, pos, decodedNum, 2);
@@ -60,7 +66,7 @@ uint16_t APRSCmd::decode(uint8_t *data, uint16_t sz)
     return pos;
 }
 
-uint16_t APRSCmd::toJSON(char *json, uint16_t sz, int deviceId)
+int APRSCmd::toJSON(char *json, uint16_t sz, int deviceId)
 {
     uint16_t result = (uint16_t)snprintf(json, sz, "{\"type\":\"APRSCmd\",\"deviceId\":%d,\"data\":{\"cmd\":\"%#x\",\"args\":\"%#x\"}}", deviceId, this->cmd, (uint16_t)this->args.get());
 
@@ -70,10 +76,10 @@ uint16_t APRSCmd::toJSON(char *json, uint16_t sz, int deviceId)
         return result;
     }
     // output too large
-    return 0;
+    return APRSCmd::ERR_ID - 12;
 }
 
-uint16_t APRSCmd::fromJSON(char *json, uint16_t sz, int &deviceId)
+int APRSCmd::fromJSON(char *json, uint16_t sz, int &deviceId)
 {
     // strings to store data in
     char deviceIdStr[5] = {0};
@@ -81,16 +87,16 @@ uint16_t APRSCmd::fromJSON(char *json, uint16_t sz, int &deviceId)
     char argsStr[7] = {0};
     // extract each string
     if (!extractStr(json, sz, "\"deviceId\":", ',', deviceIdStr, sizeof(deviceIdStr)))
-        return 0;
+        return APRSCmd::ERR_ID - 13;
     if (!extractStr(json, sz, "\"cmd\":\"", '"', cmdStr, sizeof(cmdStr)))
-        return 0;
+        return APRSCmd::ERR_ID - 14;
     if (!extractStr(json, sz, "\"args\":\"", '"', argsStr, sizeof(argsStr)))
-        return 0;
+        return APRSCmd::ERR_ID - 15;
 
     // convert to correct data type
     deviceId = atoi(deviceIdStr);
     this->cmd = strtol(cmdStr, NULL, 16);
     this->args.set(strtol(argsStr, NULL, 16));
 
-    return 1;
+    return sz;
 }

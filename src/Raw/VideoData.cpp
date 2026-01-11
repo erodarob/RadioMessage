@@ -12,7 +12,7 @@ VideoData::VideoData(uint8_t *data, uint16_t sz, VideoEncoding encoding) : encod
 {
 }
 
-uint16_t VideoData::encode(uint8_t *data, uint16_t sz)
+int VideoData::encode(uint8_t *data, uint16_t sz)
 {
     // make sure the provided array size is long enough
     if (sz >= this->size + 1)
@@ -23,10 +23,10 @@ uint16_t VideoData::encode(uint8_t *data, uint16_t sz)
         memcpy(data + 1, this->data, this->size);
         return this->size + 1;
     }
-    return 0;
+    return VideoData::ERR_ID - 1;
 }
 
-uint16_t VideoData::decode(uint8_t *data, uint16_t sz)
+int VideoData::decode(uint8_t *data, uint16_t sz)
 {
     // make sure size is not too big
     if (sz > this->maxSize)
@@ -46,7 +46,7 @@ uint16_t VideoData::decode(uint8_t *data, uint16_t sz)
     return sz;
 }
 
-uint16_t VideoData::toJSON(char *json, uint16_t sz, int deviceId)
+int VideoData::toJSON(char *json, uint16_t sz, int deviceId)
 {
     char encodingStr[10] = {0};
     this->getEncodingStr(encodingStr, sizeof(encodingStr));
@@ -55,7 +55,7 @@ uint16_t VideoData::toJSON(char *json, uint16_t sz, int deviceId)
     if (result >= sz)
     {
         // output too large
-        return 0;
+        return VideoData::ERR_ID - 2;
     }
 
     // result should be the index of the [
@@ -69,10 +69,10 @@ uint16_t VideoData::toJSON(char *json, uint16_t sz, int deviceId)
             if (added > 0 && result + added < sz)
                 result += added;
             else
-                return 0; // output too large
+                return VideoData::ERR_ID - 3; // output too large
         }
         else
-            return 0; // output too large
+            return VideoData::ERR_ID - 4; // output too large
     }
 
     // result should be the index of \0
@@ -94,10 +94,10 @@ uint16_t VideoData::toJSON(char *json, uint16_t sz, int deviceId)
     }
 
     // output too large
-    return 0;
+    return VideoData::ERR_ID - 5;
 }
 
-uint16_t VideoData::fromJSON(char *json, uint16_t sz, int &deviceId)
+int VideoData::fromJSON(char *json, uint16_t sz, int &deviceId)
 {
     // strings to store data in
     char deviceIdStr[5] = {0};
@@ -105,9 +105,9 @@ uint16_t VideoData::fromJSON(char *json, uint16_t sz, int &deviceId)
 
     // extract each string
     if (!extractStr(json, sz, "\"deviceId\":", ',', deviceIdStr))
-        return 0;
+        return VideoData::ERR_ID - 6;
     if (!extractStr(json, sz, "\"encoding\":", ',', encodingStr))
-        return 0;
+        return VideoData::ERR_ID - 7;
 
     // set encoding
     this->setEncoding(encodingStr, sizeof(encodingStr));
@@ -118,7 +118,7 @@ uint16_t VideoData::fromJSON(char *json, uint16_t sz, int &deviceId)
     // need to manually extract data (instead of using extractStr) since it is an array
     char *dataStrPos = strstr(json, "\"data\":[");
     if (dataStrPos == nullptr)
-        return 0;
+        return VideoData::ERR_ID - 8;
     int current = int(dataStrPos - json) + 10; // add 10 to move to the "["
     this->size = 0;
 

@@ -99,7 +99,7 @@ bool GSControl::processCmd(bool (*f)(char *, uint16_t, char **))
     return success;
 }
 
-uint16_t GSControl::encode(uint8_t *data, uint16_t sz)
+int GSControl::encode(uint8_t *data, uint16_t sz)
 {
     int index = 0;
     int cmdLen = strlen(this->cmdBuf);
@@ -107,7 +107,7 @@ uint16_t GSControl::encode(uint8_t *data, uint16_t sz)
 
     // check that the message can fit the cmd
     if (sz < cmdLen)
-        return 0;
+        return GSControl::ERR_ID - 1;
 
     // copy cmd
     memcpy(data + index, this->cmdBuf, cmdLen);
@@ -117,7 +117,7 @@ uint16_t GSControl::encode(uint8_t *data, uint16_t sz)
 
     // check that the message can fit the args
     if (sz < index + argLen)
-        return 0;
+        return GSControl::ERR_ID - 2;
 
     // copy args
     memcpy(data + index, this->argBuf, argLen);
@@ -127,7 +127,7 @@ uint16_t GSControl::encode(uint8_t *data, uint16_t sz)
     return index;
 }
 
-uint16_t GSControl::decode(uint8_t *data, uint16_t sz)
+int GSControl::decode(uint8_t *data, uint16_t sz)
 {
     // assume typical command structure with spaces separating args
     for (int i = 0; i < sz; i++)
@@ -155,24 +155,24 @@ uint16_t GSControl::decode(uint8_t *data, uint16_t sz)
     if (this->valid)
         // return total length added to buffers +1 for space in between
         return strlen(this->cmdBuf) + 1 + strlen(this->argBuf);
-    return 0;
+    return GSControl::ERR_ID - 3;
 }
 
-uint16_t GSControl::toJSON(char *json, uint16_t sz, int deviceId)
+int GSControl::toJSON(char *json, uint16_t sz, int deviceId)
 {
     uint16_t result = (uint16_t)snprintf(json, sz, "{\"type\":\"GSControl\",\"deviceId\":%d,\"data\":{\"valid\":%d,\"cmd\":\"%s\",\"args\":\"%s\"}}",
                                          deviceId, this->valid, this->cmdBuf, this->argBuf);
     if (result >= sz)
     {
         // output too large
-        return 0;
+        return GSControl::ERR_ID - 4;
     }
 
     // result should be the index of the \0
     return result;
 }
 
-uint16_t GSControl::fromJSON(char *json, uint16_t sz, int &deviceId)
+int GSControl::fromJSON(char *json, uint16_t sz, int &deviceId)
 {
     // strings to store data in
     char deviceIdStr[5] = {0};
@@ -180,13 +180,13 @@ uint16_t GSControl::fromJSON(char *json, uint16_t sz, int &deviceId)
 
     // extract each string
     if (!extractStr(json, sz, "\"deviceId\":", ',', deviceIdStr, sizeof(deviceIdStr)))
-        return 0;
+        return GSControl::ERR_ID - 5;
     if (!extractStr(json, sz, "\"valid\":", ',', validStr, sizeof(validStr)))
-        return 0;
+        return GSControl::ERR_ID - 6;
     if (!extractStr(json, sz, "\"cmd\":\"", '\"', this->cmdBuf, sizeof(this->cmdBuf)))
-        return 0;
+        return GSControl::ERR_ID - 7;
     if (!extractStr(json, sz, "\"args\":\"", '\"', this->argBuf, sizeof(this->argBuf)))
-        return 0;
+        return GSControl::ERR_ID - 8;
 
     // convert to correct data type
     deviceId = atoi(deviceIdStr);

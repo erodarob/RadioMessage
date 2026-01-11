@@ -1,10 +1,10 @@
 #include "APRSData.h"
 
-uint16_t APRSData::encodeHeader(uint8_t *data, uint16_t sz, uint16_t &pos)
+int APRSData::encodeHeader(uint8_t *data, uint16_t sz, uint16_t &pos)
 {
     // APRS header ("callsign>tocall,path:")
     if (sz < 29)
-        return 0; // error too small for header
+        return -1; // error too small for header
     // cause error if config not set, without this everything is left blank
     // if (strlen(this->config.callsign) == 0 || strlen(this->config.tocall) == 0 || strlen(this->config.path) == 0)
     //     return 0; // error config not set properly
@@ -15,7 +15,7 @@ uint16_t APRSData::encodeHeader(uint8_t *data, uint16_t sz, uint16_t &pos)
     return pos;
 }
 
-uint16_t APRSData::decodeHeader(uint8_t *data, uint16_t sz, uint16_t &pos)
+int APRSData::decodeHeader(uint8_t *data, uint16_t sz, uint16_t &pos)
 {
     // APRS header ("callsign>tocall,path:")
 
@@ -33,7 +33,7 @@ uint16_t APRSData::decodeHeader(uint8_t *data, uint16_t sz, uint16_t &pos)
     pos++; // skip :
 
     if (pos > sz)
-        return 0; // error something went wrong with decoding
+        return -2; // error something went wrong with decoding
 
     return pos;
 }
