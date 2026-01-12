@@ -19,7 +19,7 @@ int main(int argc, char *argv[])
     test.unpack(outV);
     printf("%d %d %d %d %d %d\n", outV[0], outV[1], outV[2], outV[3], outV[4], outV[5]);
 
-    Message m(3);
+    Message m;
     char testJSON[20000] = {0};
     char nameOut[100] = {0};
     int deviceId = 1;
@@ -231,93 +231,57 @@ int main(int argc, char *argv[])
     addr: KC3UTM
     */
 
-    // multi-message test
-    // Note: video not supported, must specify separation character when creating Message
-    printf("Starting multi-message test\n");
-    m.clear();
-    m.encode(&telem, true)->encode(&command, true)->encode(&txt, true);
-
-    printf("%d\n", m.size);
-    printf("%s\n", (char *)m.buf);
-
-    // deconstruct
-    int index = 0;
-    while (index < m.size)
-    {
-        while (index < m.size && m.buf[index] != 3)
-        {
-            printf("%c", (char)m.buf[index++]);
-        }
-        printf("\n");
-        index++;
-    }
-
-    /* Expected Output:
-    Starting multi-message test
-    115
-    KC3UTM>ALL,WIDE1-1:!M:XNe:w7P\ (m!!$dI!8<j1H&<LHZ␃KC3UTM>ALL,WIDE1-1:!""/s␃KC3UTM>ALL,WIDE1-1::KC3UTM   :Range test
-    KC3UTM>ALL,WIDE1-1:!M:XNe:w7P\ (m!!$dI!8<j1H&<LHZ
-    KC3UTM>ALL,WIDE1-1:!""/s
-    KC3UTM>ALL,WIDE1-1::KC3UTM   :Range test
-*/
-
     // GSData test
-    printf("Starting Ground Station data test\n");
-    m.clear();
-    m.encode(&telem);
-    GSData gs(APRSTelem::type, 10, m.buf, m.size);
-    m.encode(&gs);
+    printf("Starting multiplexing test\n");
+    // m.clear();
+    // m.encode(&telem);
+    GSMessage gs(APRSTelem::type, 10, &telem);
+    // m.encode(&gs);
 
-    write(1, (char *)m.buf, m.size);
+    write(1, (char *)gs.buf, gs.size);
     printf("\n");
 
-    m.clear();
-    m.encode(&command);
-    gs.fill(m.buf, m.size);
-    m.encode(&gs);
+    gs.clear();
+    gs.encode(&command);
 
-    write(1, (char *)m.buf, m.size);
+    write(1, (char *)gs.buf, gs.size);
     printf("\n");
 
-    m.clear();
+    gs.clear();
     // should be the same as above (but with txt rather than command)
-    GSData gsOut;
-    m.encode(&txt)->encode(gs.fill(m.buf, m.size))->decode(&gsOut);
+    GSMessage gsOut(APRSTelem::type, 10);
+    APRSText txtGsOut;
+    if (gsOut.encode(&txt)->decode(&txtGsOut)->hasError())
+        printf(gsOut.errors());
 
     uint8_t type = 0;
     uint8_t id = 0;
     uint16_t size = 0;
     uint32_t header = 0;
-    header += m.buf[0] << 16;
-    header += m.buf[1] << 8;
-    header += m.buf[2];
-    GSData::decodeHeader(header, type, id, size);
+    header += gsOut.buf[0] << 16;
+    header += gsOut.buf[1] << 8;
+    header += gsOut.buf[2];
+    printf("0x%x\n", header);
+    GSMessage::decodeHeader(header, type, id, size);
     printf("%d\n", type);
+    printf("%d\n", id);
     printf("%d\n", size);
     write(1, (char *)gsOut.buf, gsOut.size);
     printf("\n");
 
-    gsOut.toJSON(testJSON, 10000, deviceId);
-    printf("%s\n", testJSON);
-    memset(gsOut.buf, 0, GSData::maxSize);
-    gsOut.id = 0;
-    printf("%d\n", gsOut.fromJSON(testJSON, strlen(testJSON), deviceId));
-    printf("%s\n", gsOut.buf);
-    printf("%d\n", gsOut.id);
-    printf("%d\n", gsOut.dataType);
-
     /*Expected Output:
-    Starting Ground Station data test
-    ␁␀1KC3UTM>ALL,WIDE1-1:!M:XNe:w7P\ (m!!$dI!8<j1H&<LHZ
-    ␁␀␘KC3UTM>ALL,WIDE1-1:!""/s
-    2
-    40
-    KC3UTM>ALL,WIDE1-1::KC3UTM   :Range test
+    Starting multiplexing test
+    J1KC3UTM>ALL,WIDE1-1:!M:XNe:w7P\ (m!!$dI!8<j1H&<LHZ
+    JKC3UTM>ALL,WIDE1-1:!""/s
+    0x4a0028
+    4
     10
-    2
+    40
+    J(KC3UTM>ALL,WIDE1-1::KC3UTM   :Range test
     */
 
     // GSControl test
+    printf("Starting Ground Station control test\n");
     GSControl gsc = GSControl("test with args");
     printf("%s, %s\n", gsc.cmdBuf, gsc.argBuf);
 
@@ -343,6 +307,7 @@ int main(int argc, char *argv[])
     printf("Success (=1): %d\n", gsc2.processCmd(callback));
 
     /* Expected Output:
+    Starting Ground Station control test
     test, with args
     test with args
     test with args
@@ -358,10 +323,10 @@ int main(int argc, char *argv[])
     if (m.append(nullptr, 10e5)->hasError())
         printf(m.errors());
 
-    m.append(nullptr, 10e5);
-
     uint16_t errTestSize = 0;
-    if (m.get(nullptr, errTestSize, 10, 5)->hasError())
+    m.get(nullptr, errTestSize, 10, 5);
+
+    if (m.append(nullptr, 10e5)->hasError())
         printf(m.errors());
 
     printf("done\n");

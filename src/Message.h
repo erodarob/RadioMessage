@@ -25,31 +25,25 @@ public:
     uint8_t buf[maxSize + 1] = {0};
     // size of the stored message, max is maxSize
     uint16_t size = 0;
-    // separation character for multiple messages
-    char sep = 0;
 
     // Message default constructor
-    // - sep : the separation character when combining multiple messages
-    Message(char sep = 0) : sep(sep) {};
+    Message() {};
 
     // Message constructor
     // - rawData : an encoded message
     // - sz : the size of the encoded message
-    // - sep : the separation character when combining multiple messages
-    Message(uint8_t *rawData, uint16_t sz, char sep = 0);
+    Message(uint8_t *rawData, uint16_t sz);
 
     // Message constructor
     // - data : a ```Data``` object that will be encoded into the Message buffer
-    // - sep : the separation charaacter when combining multiple messages
-    Message(Data *data, char sep = 0);
+    Message(Data *data);
 
     // use return type Message* so we can stack operators e.g., ```Message()->fill()->encode()```
 
     // encodes ```data``` and places the output in the Message buffer
-    // Note: cannot combine multiple messages using VideoData
-    Message *encode(Data *data, bool append = false);
+    virtual Message *encode(Data *data);
     // decodes data from the Message buffer, ```data``` is populated with the decoded information
-    Message *decode(Data *data);
+    virtual Message *decode(Data *data);
     // clears all stored data
     Message *clear();
 
@@ -100,7 +94,7 @@ public:
     Message *write();
 #endif
 
-private:
+protected:
     bool err = false;
     char errStr[32] = {0};
 

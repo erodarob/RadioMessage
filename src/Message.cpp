@@ -2,7 +2,7 @@
 
 // constructors
 
-Message::Message(uint8_t *data, uint16_t sz, char sep) : sep(sep)
+Message::Message(uint8_t *data, uint16_t sz)
 {
     // make sure we don't copy more than this->maxSize bytes
     if (sz > this->maxSize)
@@ -13,7 +13,7 @@ Message::Message(uint8_t *data, uint16_t sz, char sep) : sep(sep)
     memcpy(this->buf, data, this->size);
 }
 
-Message::Message(Data *data, char sep) : sep(sep)
+Message::Message(Data *data)
 {
     // encode the given data, checking for errors
     int status = data->encode(this->buf, this->maxSize);
@@ -26,35 +26,17 @@ Message::Message(Data *data, char sep) : sep(sep)
         this->error(status);
 }
 
-Message *Message::encode(Data *data, bool append)
+Message *Message::encode(Data *data)
 {
-    if (append)
+    // encode the message
+    int status = data->encode(this->buf, this->maxSize);
+    if (status > 0)
     {
-        // check if message separation character should be added, and that there is space for it
-        if (this->sep != 0 && this->size > 0 && this->size != this->maxSize - 1)
-            this->buf[this->size++] = this->sep;
-        // encode the message
-        int status = data->encode(this->buf + this->size, this->maxSize);
-        if (status > 0)
-        {
-            this->size = status;
-            this->buf[this->size] = 0;
-        }
-        else
-            this->error(status);
+        this->size = status;
+        this->buf[this->size] = 0;
     }
     else
-    {
-        // encode the message
-        int status = data->encode(this->buf, this->maxSize);
-        if (status > 0)
-        {
-            this->size = status;
-            this->buf[this->size] = 0;
-        }
-        else
-            this->error(status);
-    }
+        this->error(status);
     return this;
 }
 
@@ -277,12 +259,12 @@ void Message::error(int errVal)
     if (!this->err)
     {
         this->err = true;
-        snprintf(errStr, sizeof(errStr), "!! Error: %d\n", errVal);
+        snprintf(errStr, sizeof(errStr), "!! Error:%d\n", errVal);
     }
     else
     {
         int len = strlen(errStr);
-        snprintf(errStr + len - 1, sizeof(errStr) - len, ", %d\n", errVal);
+        snprintf(errStr + len - 1, sizeof(errStr) - len, ",%d\n", errVal);
     }
 }
 

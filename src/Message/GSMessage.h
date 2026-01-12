@@ -1,14 +1,23 @@
-#ifndef GSDATA_H
-#define GSDATA_H
+#ifndef GSMESSAGE_H
+#define GSMESSAGE_H
+
+#if defined(ARDUINO)
+#include <Arduino.h>
+#elif defined(_WIN32) || defined(_WIN64) || defined(__unix__) || defined(__APPLE__) // Windows, Linux, or OSX
+#include <cstdint>
+#include <cstring>
+#include <cstdio>
+#include <cmath>
+using namespace std;
+#endif
 
 #include "../Data.h"
+#include "../Message.h"
 #include "../Types/PackedNum.h"
 
-class GSData : public Data
+class GSMessage : public Message
 {
 public:
-    // maximum total message size
-    static const uint16_t maxSize = 0x1FFF + 3;
     // size of the header
     static const uint8_t headerLen = 3;
     // the PackedNum encoding used by the header
@@ -19,38 +28,42 @@ public:
     static constexpr char staticGSMHeader[] = "\1GroundStationMuxer";
     // the total size of the gsm header
     static const int gsmHeaderSize = sizeof(staticGSMHeader) - 1 + sizeof(uint32_t); // -1 for null terminator
-    // GSData type
-    static const uint8_t type = 0x00;
-    // type error ID
-    static const int ERR_ID = -type * 100;
 
     // type of message, first byte of header, must be given by Data subclass, max 0xF
     uint8_t dataType = 0x00;
     // the multiplexing id of the message, max 0xF
     uint8_t id = 0x00;
     // size of message, second and third bytes of header
-    uint16_t size = 0x0000; // length of the message (10000 btyes should be enough)
+    uint16_t msgSize = 0x0000; // length of the message (10000 btyes should be enough)
     // stores the header for this message in the order dataType, id, deviceId, size (first 4), size (last 8)
     PackedNum header = {headerEncoding, headerEncodingLength};
     // buffer to store message data (not including header)
     uint8_t buf[maxSize] = {0}; // leave space for header
 
     // GSData default constructor
-    GSData() {};
+    GSMessage() : Message() {};
 
-    // GSData constructor
+    // GSMessage constructor
     // - type : the type of the message
     // - id : the multiplexing id of the message
     // - deviceId: the id for the hardware
-    GSData(uint8_t streamType, uint8_t streamId);
+    GSMessage(uint8_t streamType, uint8_t streamId);
 
-    // GSData constructor
+    // GSMessage constructor
     // - type : the type of the message
     // - id : the multiplexing id of the message
     // - deviceId: the id for the hardware
     // - buf : the data for the message
     // - size : the size of the data
-    GSData(uint8_t streamType, uint8_t streamId, uint8_t *buf, uint16_t size);
+    GSMessage(uint8_t streamType, uint8_t streamId, uint8_t *rawData, uint16_t size);
+
+    // GSMessage constructor
+    // - type : the type of the message
+    // - id : the multiplexing id of the message
+    // - deviceId: the id for the hardware
+    // - buf : the data for the message
+    // - size : the size of the data
+    GSMessage(uint8_t streamType, uint8_t streamId, Data *data);
 
     // decode Ground Station Multiplexer (GSM) header from ```header``` with length ```length```, with data bitrate placed into ```bitrate```
     // returns whether decoding was successful
@@ -75,18 +88,12 @@ public:
     // returns whether decoding was successful
     bool decodeHeader(uint8_t *header);
 
-    // encode the data stored in the ```Data``` object and place the result in ```data```
-    int encode(uint8_t *data, uint16_t sz) override;
-    // decode the data stored in ```data``` and place it in the ```Data``` object
-    int decode(uint8_t *data, uint16_t sz) override;
+    // use return type Message* so we can stack operators e.g., ```Message()->fill()->encode()```
 
-    // fill internal buffer with ```size``` bytes using the data in ```buf```
-    GSData *fill(uint8_t *buf, uint16_t size);
-
-    // place the data in the ```Data``` object in the ```json``` string, ```sz``` is the max size of the string, ```deviceId``` can be set based on hardware
-    int toJSON(char *json, uint16_t sz, int deviceId) override;
-    // place the data in the ```json``` string in the ```Data``` object, ```sz``` is the max size of the string, ```deviceId``` can be set based on hardware
-    int fromJSON(char *json, uint16_t sz, int &deviceId) override;
+    // encodes ```data``` and places the output in the Message buffer
+    Message *encode(Data *data) override;
+    // decodes data from the Message buffer, ```data``` is populated with the decoded information
+    Message *decode(Data *data) override;
 };
 
 #endif
