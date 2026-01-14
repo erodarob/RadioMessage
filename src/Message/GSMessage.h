@@ -28,7 +28,7 @@ public:
     static constexpr char staticGSMHeader[] = "\1GroundStationMuxer";
     // the total size of the gsm header
     static const int gsmHeaderSize = sizeof(staticGSMHeader) - 1 + sizeof(uint32_t); // -1 for null terminator
-    static const uint16_t maxSize = Message::maxSize - headerLen;
+    // static const uint16_t maxSize = Message::maxSize - headerLen;
 
     // type of message, first byte of header, must be given by Data subclass, max 0xF
     uint8_t dataType = 0x00;
@@ -94,6 +94,8 @@ public:
 
     // use return type Message* so we can stack operators e.g., ```Message()->fill()->encode()```
 
+    // encodes ```data``` and places the output in the Message buffer
+    Message *encode(uint8_t *data, uint16_t sz);
     // encodes ```data``` and places the output in the Message buffer
     Message *encode(Data *data) override;
     // decodes data from the Message buffer, ```data``` is populated with the decoded information

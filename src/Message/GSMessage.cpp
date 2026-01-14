@@ -189,6 +189,43 @@ void GSMessage::getMetadata(uint8_t &streamType, uint8_t &streamId)
     streamId = this->id;
 }
 
+Message *GSMessage::encode(uint8_t *data, uint16_t sz)
+{
+    // check if start + sz is larger than this->maxSize
+    if (sz > this->maxSize - GSMessage::headerLen)
+    {
+        // copy only this->maxSize bytes
+        memcpy(this->buf + GSMessage::headerLen, data, this->maxSize);
+        this->msgSize = this->maxSize - GSMessage::headerLen;
+        this->size = this->maxSize;
+
+        // error because the whole message won't be transmitted
+        this->error(GSMessage::ERR_ID - 1);
+    }
+    // if start + sz is smaller than this->maxSize
+    else
+    {
+        // copy sz bytes
+        memcpy(this->buf + GSMessage::headerLen, data, sz);
+        this->msgSize = sz;
+        this->size = sz + GSMessage::headerLen;
+    }
+
+    // header
+    // TISSss
+    // T = type (4 bits)
+    // I = id (4 bits)
+    // SS = size (first 8 bits)
+    // ss = size (last 8 bites)
+    uint8_t headerData[] = {this->dataType, this->id, (uint8_t)(this->msgSize >> 8), (uint8_t)(this->msgSize & 0xFF)};
+    header.pack(headerData);
+    // place header in data
+    // start at the beginning of the message, which means we need to remove the headerLen
+    header.get(this->buf);
+
+    return this;
+}
+
 Message *GSMessage::encode(Data *data)
 {
     // figure out where to start the new message
@@ -213,9 +250,6 @@ Message *GSMessage::encode(Data *data)
         this->error(status); // data encoding error
         return this;
     }
-
-    // printf("here\n");
-    // this->print();
 
     if (this->size > this->maxSize)
     {
