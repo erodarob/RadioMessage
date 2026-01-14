@@ -193,7 +193,7 @@ Message *Message::fill(uint8_t *data, uint16_t start, uint16_t sz)
     {
         // copy sz bytes
         memcpy(this->buf + start, data, sz);
-        this->size += sz;
+        this->size = start + sz;
     }
     return this;
 }

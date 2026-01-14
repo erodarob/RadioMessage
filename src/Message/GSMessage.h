@@ -28,6 +28,7 @@ public:
     static constexpr char staticGSMHeader[] = "\1GroundStationMuxer";
     // the total size of the gsm header
     static const int gsmHeaderSize = sizeof(staticGSMHeader) - 1 + sizeof(uint32_t); // -1 for null terminator
+    static const uint16_t maxSize = Message::maxSize - headerLen;
 
     // type of message, first byte of header, must be given by Data subclass, max 0xF
     uint8_t dataType = 0x00;
@@ -37,8 +38,6 @@ public:
     uint16_t msgSize = 0x0000; // length of the message (10000 btyes should be enough)
     // stores the header for this message in the order dataType, id, deviceId, size (first 4), size (last 8)
     PackedNum header = {headerEncoding, headerEncodingLength};
-    // buffer to store message data (not including header)
-    uint8_t buf[maxSize] = {0}; // leave space for header
 
     // GSData default constructor
     GSMessage() : Message() {};
@@ -87,6 +86,11 @@ public:
     // header assumed to contain at least GSData::headerLen bytes
     // returns whether decoding was successful
     bool decodeHeader(uint8_t *header);
+
+    bool decodeHeader();
+
+    void setMetadata(uint8_t streamType, uint8_t streamId);
+    void getMetadata(uint8_t &streamType, uint8_t &streamId);
 
     // use return type Message* so we can stack operators e.g., ```Message()->fill()->encode()```
 

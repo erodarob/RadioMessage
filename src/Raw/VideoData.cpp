@@ -1,16 +1,13 @@
 #include "VideoData.h"
 
-VideoData::VideoData(VideoEncoding encoding) : encoding(encoding)
-{
-}
+VideoData::VideoData(VideoEncoding encoding)
+    : encoding(encoding) {}
 
-VideoData::VideoData(uint8_t *data, VideoEncoding encoding) : encoding(encoding), GenericData(data)
-{
-}
+VideoData::VideoData(uint8_t *data, VideoEncoding encoding)
+    : encoding(encoding), GenericData(data) {}
 
-VideoData::VideoData(uint8_t *data, uint16_t sz, VideoEncoding encoding) : encoding(encoding), GenericData(data, sz)
-{
-}
+VideoData::VideoData(uint8_t *data, uint16_t sz, VideoEncoding encoding)
+    : encoding(encoding), GenericData(data, sz) {}
 
 int VideoData::encode(uint8_t *data, uint16_t sz)
 {
@@ -18,7 +15,7 @@ int VideoData::encode(uint8_t *data, uint16_t sz)
     if (sz >= this->size + 1)
     {
         // copy the encoding
-        data[0] = encoding;
+        data[0] = this->encoding;
         // copy the data
         memcpy(data + 1, this->data, this->size);
         return this->size + 1;
@@ -29,18 +26,18 @@ int VideoData::encode(uint8_t *data, uint16_t sz)
 int VideoData::decode(uint8_t *data, uint16_t sz)
 {
     // make sure size is not too big
-    if (sz > this->maxSize)
-        this->size = this->maxSize;
+    if (sz > VideoData::maxSize)
+        this->size = VideoData::maxSize;
     else
-        this->size = sz;
+        this->size = sz - 1;
     // get encoding
     // assume NONE is the last value in the VideoEncoding enum
     if (data[0] > NONE)
         // there is not an enum for this, so set to none
-        encoding = NONE;
+        this->encoding = NONE;
     else
         // get the encoding normally
-        encoding = (VideoEncoding)data[0];
+        this->encoding = (VideoEncoding)data[0];
     // copy data into internal buffer
     memcpy(this->data, data + 1, sz - 1);
     return sz;

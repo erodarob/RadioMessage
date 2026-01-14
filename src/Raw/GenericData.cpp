@@ -18,6 +18,26 @@ GenericData::GenericData(uint8_t *data, uint16_t sz)
     memcpy(this->data, data, this->size);
 }
 
+bool GenericData::fill(uint8_t *data, uint16_t sz)
+{
+    // check if start + sz is larger than this->maxSize
+    if (sz > this->maxSize)
+    {
+        // copy only this->maxSize bytes
+        memcpy(this->data, data, this->maxSize);
+        this->size = this->maxSize;
+        return false;
+    }
+    // if start + sz is smaller than this->maxSize
+    else
+    {
+        // copy sz bytes
+        memcpy(this->data, data, sz);
+        this->size = sz;
+        return true;
+    }
+}
+
 int GenericData::encode(uint8_t *data, uint16_t sz)
 {
     // make sure the provided array size is long enough

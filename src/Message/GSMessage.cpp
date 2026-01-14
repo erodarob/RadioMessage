@@ -149,6 +149,46 @@ bool GSMessage::decodeHeader(uint8_t *header)
     return success;
 }
 
+bool GSMessage::decodeHeader()
+{
+    if (this->size >= GSMessage::headerLen)
+    {
+        // header
+        // TISSss
+        // T = type (4 bits)
+        // I = id (4 bits)
+        // SS = size (first 8 bits)
+        // ss = size (last 8 bites)
+        this->header.set(this->buf);
+        // unpack the data
+        uint8_t headerData[GSMessage::headerEncodingLength] = {0};
+        bool success = this->header.unpack(headerData);
+
+        if (success)
+        {
+            // set all variables according to where data is stored
+            this->dataType = headerData[0];
+            this->id = headerData[1];
+            this->msgSize = headerData[2] << 8;
+            this->msgSize += headerData[3];
+        }
+        return success;
+    }
+    return false;
+}
+
+void GSMessage::setMetadata(uint8_t streamType, uint8_t streamId)
+{
+    this->dataType = streamType;
+    this->id = streamId;
+}
+
+void GSMessage::getMetadata(uint8_t &streamType, uint8_t &streamId)
+{
+    streamType = this->dataType;
+    streamId = this->id;
+}
+
 Message *GSMessage::encode(Data *data)
 {
     // figure out where to start the new message

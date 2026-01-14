@@ -30,6 +30,9 @@ public:
     // - sz : the size of the data
     GenericData(uint8_t *data, uint16_t sz);
 
+    // copy ```sz``` bytes from ```data``` into the Message buffer, ```sz``` must be less than ```Message.maxSize```
+    bool fill(uint8_t *data, uint16_t sz);
+
     // encode the data stored in the ```Data``` object and place the result in ```data```, ```sz``` is the max size of ```data```
     int encode(uint8_t *data, uint16_t sz) override;
     // decode the data stored in ```data``` and place it in the ```Data``` object, ```sz``` is the number of bytes from ```data``` to decode
