@@ -19,7 +19,7 @@
 
         private:
             //these are the data memebers that we need to run the Avionics algorithms on 
-            static const uint8_t type = 0x09;
+            static const uint8_t type = 0xA;
     };
 
 #endif // ASTRA_DATA_H

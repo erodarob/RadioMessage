@@ -40,6 +40,9 @@
             uint16_t toJSON(char *json, uint16_t sz, int deviceId) override;
             uint16_t fromJSON(char *json, uint16_t sz, int &deviceId) override;
 
+            HITLData parser(std::FILE *file); //this parser is going to be used to scan a file and place every value in its 
+                                              //respective field 
+
             //these are the data memebers that we need to run the Avionics algorithms on 
             // ---- Time ----
             float timestamp_s;          // simulation time (seconds)
