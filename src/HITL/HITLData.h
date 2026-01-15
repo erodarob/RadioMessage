@@ -8,14 +8,7 @@
 
     class HITLData : public Data {
         public: 
-            HITLData() 
-                : timestamp_s(0.0f), ax(0.0f), ay(0.0f), az(0.0f),
-                  gx(0.0f), gy(0.0f), gz(0.0f),
-                  mx(0.0f), my(0.0f), mz(0.0f),
-                  pressure_hPa(0.0f), temp_C(0.0f),
-                  lat_deg(0.0), lon_deg(0.0), alt_m(0.0f),
-                  fix(0), fixqual(0), heading_deg(0.0f)
-            {} //complete default contructor, everything intialized to zero
+            HITLData();//complete default contructor, everything intialized to zero
 
             HITLData(float _timestamp_s, 
                      float _ax, float _ay, float _az,
@@ -23,14 +16,7 @@
                      float _mx, float _my, float _mz,
                      float _pressure_hPa, float _temp_C,
                      double _lat_deg, double _lon_deg, float _alt_m,
-                     uint8_t _fix, uint8_t _fixqual, float _heading_deg)
-                : timestamp_s(_timestamp_s), ax(_ax), ay(_ay), az(_az),
-                  gx(_gx), gy(_gy), gz(_gz),
-                  mx(_mx), my(_my), mz(_mz),
-                  pressure_hPa(_pressure_hPa), temp_C(_temp_C),
-                  lat_deg(_lat_deg), lon_deg(_lon_deg), alt_m(_alt_m),
-                  fix(_fix), fixqual(_fixqual), heading_deg(_heading_deg)
-            {} //parameterized constructor
+                     uint8_t _fix, uint8_t _fixqual, float _heading_deg);  //parameterized constructor
 
 
 
