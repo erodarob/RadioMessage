@@ -7,18 +7,7 @@ GSControl::GSControl(const char *cmd)
 
 GSControl::GSControl(const char *cmd, const char *args)
 {
-    int cmdLen = strlen(cmd);
-    int argLen = strlen(args);
-
-    int validCmdLen = cmdLen > (sizeof(cmdBuf) - 1) ? (sizeof(cmdBuf) - 1) : cmdLen;
-    int validArgLen = argLen > (sizeof(argBuf) - 1) ? (sizeof(argBuf) - 1) : argLen;
-
-    memcpy(this->cmdBuf, cmd, validCmdLen);
-    memcpy(this->argBuf, args, validArgLen);
-    this->cmdBuf[validCmdLen] = 0; // ensure null termination
-    this->argBuf[validArgLen] = 0;
-
-    this->valid = !(cmdLen > (sizeof(cmdBuf) - 1) || argLen > (sizeof(argBuf) - 1));
+    this->setCmd(cmd, args);
 }
 
 GSControl::GSControl(const char *cmd, uint16_t argc, const char **argv)
@@ -55,7 +44,23 @@ GSControl::GSControl(const char *cmd, uint16_t argc, const char **argv)
     this->valid = !(cmdLen > (sizeof(cmdBuf) - 1) || assembleArgsFail);
 }
 
-bool GSControl::processCmd(bool (*f)(char *, uint16_t, char **))
+void GSControl::setCmd(const char *cmd, const char *args)
+{
+    int cmdLen = strlen(cmd);
+    int argLen = strlen(args);
+
+    int validCmdLen = cmdLen > (sizeof(cmdBuf) - 1) ? (sizeof(cmdBuf) - 1) : cmdLen;
+    int validArgLen = argLen > (sizeof(argBuf) - 1) ? (sizeof(argBuf) - 1) : argLen;
+
+    memcpy(this->cmdBuf, cmd, validCmdLen);
+    memcpy(this->argBuf, args, validArgLen);
+    this->cmdBuf[validCmdLen] = 0; // ensure null termination
+    this->argBuf[validArgLen] = 0;
+
+    this->valid = !(cmdLen > (sizeof(cmdBuf) - 1) || argLen > (sizeof(argBuf) - 1));
+}
+
+bool GSControl::processCmd(GSControl_CB f)
 {
     uint16_t argc = 0;
     int maxArgLen = 0;
@@ -97,6 +102,53 @@ bool GSControl::processCmd(bool (*f)(char *, uint16_t, char **))
     delete[] argv;
 
     return success;
+}
+
+void GSControl::retrieveCmd(char *cmd, uint16_t &argc, char **argv)
+{
+    argc = 0;
+    int maxArgLen = 0;
+    int lastArgPos = 0;
+    for (int i = 0; i < strlen(this->argBuf); i++)
+    {
+        if (this->argBuf[i] == ' ')
+        {
+            argc++;
+            if (maxArgLen < i - lastArgPos)
+                maxArgLen = i - lastArgPos;
+            lastArgPos = i;
+        }
+    }
+    argc++; // add one since last arg doesn't have a space
+
+    argv = new char *[argc];
+    for (int i = 0; i < argc; i++)
+        argv[i] = new char[maxArgLen + 1]; // add 1 for null terminator
+
+    int argIdx = 0;
+    lastArgPos = 0;
+    int argsLen = strlen(this->argBuf);
+    for (int i = 0; i < argsLen; i++)
+    {
+        if (this->argBuf[i] == ' ' || i == argsLen - 1)
+        {
+            memcpy(argv[argIdx], this->argBuf + lastArgPos, i - lastArgPos + 1); // include trailing char (' ' or '\0')
+            argv[argIdx][i - lastArgPos + 1] = 0;                                // add null terminator
+            argIdx++;
+            lastArgPos = i + 1; // add 1 to skip space
+        }
+    }
+
+    cmd = this->cmdBuf;
+
+    // bool success = f(this->cmdBuf, argc, argv);
+}
+
+void GSControl::cleanup(uint16_t argc, char **argv)
+{
+    for (int i = 0; i < argc; i++)
+        delete[] argv[i];
+    delete[] argv;
 }
 
 int GSControl::encode(uint8_t *data, uint16_t sz)

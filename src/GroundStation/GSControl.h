@@ -1,10 +1,10 @@
 #ifndef GSCONTROL_H
 #define GSCONTROL_H
 
-// TODO deconflict type numbers
-
 #include "../Data.h"
 #include "../Types/PackedNum.h"
+
+typedef bool (*GSControl_CB)(char *, uint16_t, char **);
 
 class GSControl : public Data
 {
@@ -19,9 +19,9 @@ public:
     static const int ERR_ID = -type * 100;
 
     // buffer to store message command
-    char cmdBuf[maxCmdSize] = {0};
+    char cmdBuf[maxCmdSize + 1] = {0};
     // buffer to store message args
-    char argBuf[maxArgSize] = {0};
+    char argBuf[maxArgSize + 1] = {0};
 
     // whether the command was successfully fit into the internal variables
     bool valid = false;
@@ -44,8 +44,14 @@ public:
     // - argv : the values of the arguments for the message, must be null terminated
     GSControl(const char *cmd, uint16_t argc, const char **argv);
 
+    void setCmd(const char *cmd, const char *args);
+
     // process the command contained within the GSControl object using the callback function f
-    bool processCmd(bool (*f)(char *, uint16_t, char **));
+    bool processCmd(GSControl_CB f);
+
+    void retrieveCmd(char *cmd, uint16_t &argc, char **argv);
+
+    void cleanup(uint16_t argc, char **argv);
 
     // encode the data stored in the ```Data``` object and place the result in ```data```
     int encode(uint8_t *data, uint16_t sz) override;
