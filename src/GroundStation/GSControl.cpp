@@ -13,9 +13,9 @@ GSControl::GSControl(const char *cmd, const char *args)
 GSControl::GSControl(const char *cmd, uint16_t argc, const char **argv)
 {
     // copy command
-    int cmdLen = strlen(cmd);
+    uint32_t cmdLen = strlen(cmd);
 
-    int validCmdLen = cmdLen > (sizeof(cmdBuf) - 1) ? (sizeof(cmdBuf) - 1) : cmdLen;
+    uint32_t validCmdLen = cmdLen > (sizeof(cmdBuf) - 1) ? (sizeof(cmdBuf) - 1) : cmdLen;
 
     memcpy(this->cmdBuf, cmd, validCmdLen);
     this->cmdBuf[validCmdLen] = 0; // ensure null termination
@@ -46,11 +46,11 @@ GSControl::GSControl(const char *cmd, uint16_t argc, const char **argv)
 
 void GSControl::setCmd(const char *cmd, const char *args)
 {
-    int cmdLen = strlen(cmd);
-    int argLen = strlen(args);
+    uint32_t cmdLen = strlen(cmd);
+    uint32_t argLen = strlen(args);
 
-    int validCmdLen = cmdLen > (sizeof(cmdBuf) - 1) ? (sizeof(cmdBuf) - 1) : cmdLen;
-    int validArgLen = argLen > (sizeof(argBuf) - 1) ? (sizeof(argBuf) - 1) : argLen;
+    uint32_t validCmdLen = cmdLen > (sizeof(cmdBuf) - 1) ? (sizeof(cmdBuf) - 1) : cmdLen;
+    uint32_t validArgLen = argLen > (sizeof(argBuf) - 1) ? (sizeof(argBuf) - 1) : argLen;
 
     memcpy(this->cmdBuf, cmd, validCmdLen);
     memcpy(this->argBuf, args, validArgLen);
@@ -65,7 +65,7 @@ bool GSControl::processCmd(GSControl_CB f)
     uint16_t argc = 0;
     int maxArgLen = 0;
     int lastArgPos = 0;
-    for (int i = 0; i < strlen(this->argBuf); i++)
+    for (int i = 0; i < (int)strlen(this->argBuf); i++)
     {
         if (this->argBuf[i] == ' ')
         {
@@ -109,7 +109,7 @@ void GSControl::retrieveCmd(char *cmd, uint16_t &argc, char **argv)
     argc = 0;
     int maxArgLen = 0;
     int lastArgPos = 0;
-    for (int i = 0; i < strlen(this->argBuf); i++)
+    for (int i = 0; i < (int)strlen(this->argBuf); i++)
     {
         if (this->argBuf[i] == ' ')
         {
@@ -146,9 +146,13 @@ void GSControl::retrieveCmd(char *cmd, uint16_t &argc, char **argv)
 
 void GSControl::cleanup(uint16_t argc, char **argv)
 {
-    for (int i = 0; i < argc; i++)
-        delete[] argv[i];
-    delete[] argv;
+    if (argv != nullptr)
+    {
+        for (int i = 0; i < argc; i++)
+            if (argv[i] != nullptr)
+                delete[] argv[i];
+        delete[] argv;
+    }
 }
 
 int GSControl::encode(uint8_t *data, uint16_t sz)
@@ -182,13 +186,13 @@ int GSControl::encode(uint8_t *data, uint16_t sz)
 int GSControl::decode(uint8_t *data, uint16_t sz)
 {
     // assume typical command structure with spaces separating args
-    for (int i = 0; i < sz; i++)
+    for (uint32_t i = 0; i < sz; i++)
     {
         if (data[i] == ' ')
         {
             // copy command
             // cut this portion of the string at the max size of cmdBuf if it's too long
-            int cmdOffset = i > (sizeof(cmdBuf) - 1) ? (sizeof(cmdBuf) - 1) : i;
+            uint32_t cmdOffset = i > (sizeof(cmdBuf) - 1) ? (sizeof(cmdBuf) - 1) : i;
             memcpy(this->cmdBuf, data, cmdOffset);
             this->cmdBuf[cmdOffset] = 0; // ensure null terminated
             cmdOffset++;                 // skip space character
