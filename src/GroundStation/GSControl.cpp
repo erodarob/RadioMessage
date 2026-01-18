@@ -62,6 +62,7 @@ void GSControl::setCmd(const char *cmd, const char *args)
 
 bool GSControl::processCmd(GSControl_CB f)
 {
+    // Notice: this code is prone to "off by one" errors, proceed with caution
     uint16_t argc = 0;
     int maxArgLen = 0;
     int lastArgPos = 0;
@@ -70,6 +71,10 @@ bool GSControl::processCmd(GSControl_CB f)
         if (this->argBuf[i] == ' ')
         {
             argc++;
+            // need to account for i being an index
+            // for a string of length 2
+            // i will be 1 at the end
+            // so i+1 is the length
             if (maxArgLen < i - lastArgPos)
                 maxArgLen = i - lastArgPos;
             lastArgPos = i;
@@ -88,7 +93,7 @@ bool GSControl::processCmd(GSControl_CB f)
     {
         if (this->argBuf[i] == ' ' || i == argsLen - 1)
         {
-            memcpy(argv[argIdx], this->argBuf + lastArgPos, i - lastArgPos + 1); // include trailing char (' ' or '\0')
+            memcpy(argv[argIdx], this->argBuf + lastArgPos, i + 1 - lastArgPos); // add one to account for i being an index
             argv[argIdx][i - lastArgPos + 1] = 0;                                // add null terminator
             argIdx++;
             lastArgPos = i + 1; // add 1 to skip space
@@ -104,44 +109,46 @@ bool GSControl::processCmd(GSControl_CB f)
     return success;
 }
 
-void GSControl::retrieveCmd(char *cmd, uint16_t &argc, char **argv)
+void GSControl::retrieveCmd(char **cmd, uint16_t *argc, char ***argv)
 {
-    argc = 0;
+    // Notice: this code is prone to "off by one" errors, proceed with caution
+    *argc = 0;
     int maxArgLen = 0;
     int lastArgPos = 0;
-    for (int i = 0; i < (int)strlen(this->argBuf); i++)
-    {
-        if (this->argBuf[i] == ' ')
-        {
-            argc++;
-            if (maxArgLen < i - lastArgPos)
-                maxArgLen = i - lastArgPos;
-            lastArgPos = i;
-        }
-    }
-    argc++; // add one since last arg doesn't have a space
-
-    argv = new char *[argc];
-    for (int i = 0; i < argc; i++)
-        argv[i] = new char[maxArgLen + 1]; // add 1 for null terminator
-
-    int argIdx = 0;
-    lastArgPos = 0;
     int argsLen = strlen(this->argBuf);
     for (int i = 0; i < argsLen; i++)
     {
         if (this->argBuf[i] == ' ' || i == argsLen - 1)
         {
-            memcpy(argv[argIdx], this->argBuf + lastArgPos, i - lastArgPos + 1); // include trailing char (' ' or '\0')
-            argv[argIdx][i - lastArgPos + 1] = 0;                                // add null terminator
+            (*argc)++;
+            // need to account for i being an index
+            // for a string of length 2
+            // i will be 1 at the end
+            // so i+1 is the length
+            if (maxArgLen < i + 1 - lastArgPos)
+                maxArgLen = i + 1 - lastArgPos;
+            lastArgPos = i;
+        }
+    }
+
+    *argv = new char *[*argc];
+    for (int i = 0; i < *argc; i++)
+        (*argv)[i] = new char[maxArgLen + 1]; // add 1 for null terminator
+
+    int argIdx = 0;
+    lastArgPos = 0;
+    for (int i = 0; i < argsLen; i++)
+    {
+        if (this->argBuf[i] == ' ' || i == argsLen - 1)
+        {
+            memcpy((*argv)[argIdx], this->argBuf + lastArgPos, i + 1 - lastArgPos); // add one to account for i being an index
+            (*argv)[argIdx][i + 1 - lastArgPos] = 0;                                // add null terminator
             argIdx++;
             lastArgPos = i + 1; // add 1 to skip space
         }
     }
 
-    cmd = this->cmdBuf;
-
-    // bool success = f(this->cmdBuf, argc, argv);
+    *cmd = this->cmdBuf;
 }
 
 void GSControl::cleanup(uint16_t argc, char **argv)
@@ -192,7 +199,7 @@ int GSControl::decode(uint8_t *data, uint16_t sz)
         {
             // copy command
             // cut this portion of the string at the max size of cmdBuf if it's too long
-            uint32_t cmdOffset = i > (sizeof(cmdBuf) - 1) ? (sizeof(cmdBuf) - 1) : i;
+            uint32_t cmdOffset = i > (sizeof(this->cmdBuf) - 1) ? (sizeof(this->cmdBuf) - 1) : i;
             memcpy(this->cmdBuf, data, cmdOffset);
             this->cmdBuf[cmdOffset] = 0; // ensure null terminated
             cmdOffset++;                 // skip space character

@@ -49,7 +49,7 @@ public:
     // process the command contained within the GSControl object using the callback function f
     bool processCmd(GSControl_CB f);
 
-    void retrieveCmd(char *cmd, uint16_t &argc, char **argv);
+    void retrieveCmd(char **cmd, uint16_t *argc, char ***argv);
 
     void cleanup(uint16_t argc, char **argv);
 
