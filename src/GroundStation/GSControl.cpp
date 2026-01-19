@@ -1,8 +1,8 @@
 #include "GSControl.h"
 
-GSControl::GSControl(const char *cmd)
+GSControl::GSControl(const char *data)
 {
-    this->decode((uint8_t *)cmd, strlen(cmd));
+    this->decode((uint8_t *)data, strlen(data));
 }
 
 GSControl::GSControl(const char *cmd, const char *args)
@@ -231,6 +231,23 @@ int GSControl::decode(uint8_t *data, uint16_t sz)
             int argLen = (sz - cmdOffset) > (sizeof(argBuf) - 1) ? (sizeof(argBuf) - 1) : (sz - cmdOffset);
             memcpy(this->argBuf, data + cmdOffset, argLen);
             this->argBuf[argLen] = 0; // ensure null terminated
+
+            this->valid = !((sz - cmdOffset) > (sizeof(argBuf) - 1) || i > (sizeof(cmdBuf) - 1));
+            break;
+        }
+
+        if (i == (uint32_t)(sz - 1))
+        {
+            // command with no args
+            // copy command
+            // cut this portion of the string at the max size of cmdBuf if it's too long
+            uint32_t cmdOffset = i > (sizeof(this->cmdBuf) - 1) ? (sizeof(this->cmdBuf) - 1) : i;
+            memcpy(this->cmdBuf, data, cmdOffset);
+            this->cmdBuf[cmdOffset] = 0; // ensure null terminated
+            cmdOffset++;                 // skip space character
+
+            // copy args
+            this->argBuf[0] = 0; // ensure null terminated
 
             this->valid = !((sz - cmdOffset) > (sizeof(argBuf) - 1) || i > (sizeof(cmdBuf) - 1));
             break;

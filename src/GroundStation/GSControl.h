@@ -30,8 +30,8 @@ public:
     GSControl() {};
 
     // GSControl constructor
-    // - cmd : the command and arguments for the message, must be null terminated
-    GSControl(const char *cmd);
+    // - data : the command and arguments for the message, must be null terminated
+    GSControl(const char *data);
 
     // GSControl constructor
     // - cmd : the command for the message, must be null terminated
