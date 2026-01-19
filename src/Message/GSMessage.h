@@ -28,7 +28,6 @@ public:
     static constexpr char staticGSMHeader[] = "\1GroundStationMuxer";
     // the total size of the gsm header
     static const int gsmHeaderSize = sizeof(staticGSMHeader) - 1 + sizeof(uint32_t); // -1 for null terminator
-    // static const uint16_t maxSize = Message::maxSize - headerLen;
 
     // type of message, first byte of header, must be given by Data subclass, max 0xF
     uint8_t dataType = 0x00;
@@ -39,7 +38,7 @@ public:
     // stores the header for this message in the order dataType, id, deviceId, size (first 4), size (last 8)
     PackedNum header = {headerEncoding, headerEncodingLength};
 
-    // GSData default constructor
+    // GSMessage default constructor
     GSMessage() : Message() {};
 
     // GSMessage constructor
@@ -71,25 +70,29 @@ public:
     // returns whether encoding was successful
     static bool encodeGSMHeader(char *header, int length, uint32_t bitrate);
 
-    // decode GSData header ```header```, and place the results into ```streamType```, ```streamId```, and ```size```
+    // decode GSMessage header ```header```, and place the results into ```streamType```, ```streamId```, and ```size```
     // returns whether decoding was successful
     static bool decodeHeader(uint32_t header, uint8_t &streamType, uint8_t &streamId, uint16_t &size);
-    // decode GSData header ```header```, and place the results into ```streamType```, ```streamId```, and ```size```
-    // header assumed to contain at least GSData::headerLen bytes
+    // decode GSMessage header ```header```, and place the results into ```streamType```, ```streamId```, and ```size```
+    // header assumed to contain at least GSMessage::headerLen bytes
     // returns whether decoding was successful
     static bool decodeHeader(uint8_t *header, uint8_t &streamType, uint8_t &streamId, uint16_t &size);
 
-    // decode GSData header ```header```, and place the results into this object
+    // decode GSMessage header ```header```, and place the results into this object
     // returns whether decoding was successful
     bool decodeHeader(uint32_t header);
-    // decode GSData header ```header```, and place the results into this object
-    // header assumed to contain at least GSData::headerLen bytes
+    // decode GSMessage header ```header```, and place the results into this object
+    // header assumed to contain at least GSMessage::headerLen bytes
     // returns whether decoding was successful
     bool decodeHeader(uint8_t *header);
-
+    // decode the header stored in the first 3 bytes of this object's buffer, and place the results into this object
+    // fails if buffer contains less than GSMessage::headerLen bytes
+    // returns whether decoding was successful
     bool decodeHeader();
 
+    // set the metadata for encoding from ```streamType``` and ```streamId```
     void setMetadata(uint8_t streamType, uint8_t streamId);
+    // retrieve metadata and place into ```streamType``` and ```streamId```
     void getMetadata(uint8_t &streamType, uint8_t &streamId);
 
     // use return type Message* so we can stack operators e.g., ```Message()->fill()->encode()```

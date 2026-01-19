@@ -46,12 +46,13 @@ public:
 
     void setCmd(const char *cmd, const char *args);
 
-    // process the command contained within the GSControl object using the callback function f
+    // process the command contained within the GSControl object using the callback function ```f```
     bool processCmd(GSControl_CB f);
-
+    // place the contents of the command in the supplied ```cmd```, ```argc```, and ```argv``` variables
+    // should be called as ```retrieveCmd(&cmd, &argc, &argv)```, where ```cmd```=char*, ```argc```=uint16_t, ```argv```=char**
     void retrieveCmd(char **cmd, uint16_t *argc, char ***argv);
-
-    void cleanup(uint16_t argc, char **argv);
+    // clean up memory used by ```argv```
+    void cleanup(uint16_t argc, char ***argv);
 
     // encode the data stored in the ```Data``` object and place the result in ```data```
     int encode(uint8_t *data, uint16_t sz) override;

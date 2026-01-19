@@ -15,8 +15,10 @@ GSControl::GSControl(const char *cmd, uint16_t argc, const char **argv)
     // copy command
     uint32_t cmdLen = strlen(cmd);
 
+    // limit command length to the max length
     uint32_t validCmdLen = cmdLen > (sizeof(cmdBuf) - 1) ? (sizeof(cmdBuf) - 1) : cmdLen;
 
+    // copy the command
     memcpy(this->cmdBuf, cmd, validCmdLen);
     this->cmdBuf[validCmdLen] = 0; // ensure null termination
 
@@ -41,56 +43,66 @@ GSControl::GSControl(const char *cmd, uint16_t argc, const char **argv)
         }
     }
 
+    // check whether the assembled message represents the input
     this->valid = !(cmdLen > (sizeof(cmdBuf) - 1) || assembleArgsFail);
 }
 
 void GSControl::setCmd(const char *cmd, const char *args)
 {
+    // get length of command and args
     uint32_t cmdLen = strlen(cmd);
     uint32_t argLen = strlen(args);
 
+    // check whether either is too long
     uint32_t validCmdLen = cmdLen > (sizeof(cmdBuf) - 1) ? (sizeof(cmdBuf) - 1) : cmdLen;
     uint32_t validArgLen = argLen > (sizeof(argBuf) - 1) ? (sizeof(argBuf) - 1) : argLen;
 
+    // copy the correct length
     memcpy(this->cmdBuf, cmd, validCmdLen);
     memcpy(this->argBuf, args, validArgLen);
     this->cmdBuf[validCmdLen] = 0; // ensure null termination
     this->argBuf[validArgLen] = 0;
 
+    // check whether the assembled message represents the input
     this->valid = !(cmdLen > (sizeof(cmdBuf) - 1) || argLen > (sizeof(argBuf) - 1));
 }
 
 bool GSControl::processCmd(GSControl_CB f)
 {
     // Notice: this code is prone to "off by one" errors, proceed with caution
+
+    // get number of args
     uint16_t argc = 0;
     int maxArgLen = 0;
     int lastArgPos = 0;
-    for (int i = 0; i < (int)strlen(this->argBuf); i++)
+    int argsLen = strlen(this->argBuf);
+    for (int i = 0; i < argsLen; i++)
     {
-        if (this->argBuf[i] == ' ')
+        // new arg at space character or end of string
+        if (this->argBuf[i] == ' ' || i == argsLen - 1)
         {
             argc++;
             // need to account for i being an index
             // for a string of length 2
             // i will be 1 at the end
             // so i+1 is the length
-            if (maxArgLen < i - lastArgPos)
-                maxArgLen = i - lastArgPos;
+            if (maxArgLen < i + 1 - lastArgPos)
+                maxArgLen = i + 1 - lastArgPos;
             lastArgPos = i;
         }
     }
-    argc++; // add one since last arg doesn't have a space
 
+    // allocate memory for argv
     char **argv = new char *[argc];
     for (int i = 0; i < argc; i++)
         argv[i] = new char[maxArgLen + 1]; // add 1 for null terminator
 
+    // set argv
     int argIdx = 0;
     lastArgPos = 0;
-    int argsLen = strlen(this->argBuf);
     for (int i = 0; i < argsLen; i++)
     {
+        // new arg at space character or end of string
         if (this->argBuf[i] == ' ' || i == argsLen - 1)
         {
             memcpy(argv[argIdx], this->argBuf + lastArgPos, i + 1 - lastArgPos); // add one to account for i being an index
@@ -100,8 +112,10 @@ bool GSControl::processCmd(GSControl_CB f)
         }
     }
 
+    // pass to callback
     bool success = f(this->cmdBuf, argc, argv);
 
+    // clean up memory
     for (int i = 0; i < argc; i++)
         delete[] argv[i];
     delete[] argv;
@@ -112,12 +126,15 @@ bool GSControl::processCmd(GSControl_CB f)
 void GSControl::retrieveCmd(char **cmd, uint16_t *argc, char ***argv)
 {
     // Notice: this code is prone to "off by one" errors, proceed with caution
+
+    // get number of args
     *argc = 0;
     int maxArgLen = 0;
     int lastArgPos = 0;
     int argsLen = strlen(this->argBuf);
     for (int i = 0; i < argsLen; i++)
     {
+        // new arg at space character or end of string
         if (this->argBuf[i] == ' ' || i == argsLen - 1)
         {
             (*argc)++;
@@ -131,14 +148,17 @@ void GSControl::retrieveCmd(char **cmd, uint16_t *argc, char ***argv)
         }
     }
 
+    // allocate memory for argv
     *argv = new char *[*argc];
     for (int i = 0; i < *argc; i++)
         (*argv)[i] = new char[maxArgLen + 1]; // add 1 for null terminator
 
+    // set argv
     int argIdx = 0;
     lastArgPos = 0;
     for (int i = 0; i < argsLen; i++)
     {
+        // new arg at space character or end of string
         if (this->argBuf[i] == ' ' || i == argsLen - 1)
         {
             memcpy((*argv)[argIdx], this->argBuf + lastArgPos, i + 1 - lastArgPos); // add one to account for i being an index
@@ -148,17 +168,19 @@ void GSControl::retrieveCmd(char **cmd, uint16_t *argc, char ***argv)
         }
     }
 
+    // set cmd
     *cmd = this->cmdBuf;
 }
 
-void GSControl::cleanup(uint16_t argc, char **argv)
+void GSControl::cleanup(uint16_t argc, char ***argv)
 {
-    if (argv != nullptr)
+    // delete memory as if argv was made by retrieveCmd, checking for nullptr along the way
+    if (*argv != nullptr)
     {
         for (int i = 0; i < argc; i++)
-            if (argv[i] != nullptr)
-                delete[] argv[i];
-        delete[] argv;
+            if ((*argv)[i] != nullptr)
+                delete[] (*argv)[i];
+        delete[] (*argv);
     }
 }
 

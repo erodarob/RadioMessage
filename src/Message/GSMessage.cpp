@@ -37,6 +37,7 @@ bool GSMessage::decodeGSMHeader(char *header, int length, uint32_t &bitrate)
 
 bool GSMessage::encodeGSMHeader(char *header, int length, uint32_t bitrate)
 {
+    // TODO: comment this
     if (length < GSMessage::gsmHeaderSize)
         return false;
     memcpy(header, GSMessage::staticGSMHeader, sizeof(GSMessage::staticGSMHeader) - 1);
