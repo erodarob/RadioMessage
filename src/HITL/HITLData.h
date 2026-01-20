@@ -16,7 +16,7 @@
                      float _mx, float _my, float _mz,
                      float _pressure_hPa, float _temp_C,
                      double _lat_deg, double _lon_deg, float _alt_m,
-                     uint8_t _fix, uint8_t _fixqual, float _heading_deg);  //parameterized constructor
+                    uint8_t _fixqual, float _heading_deg);  //parameterized constructor
 
 
 
@@ -55,7 +55,6 @@
             double lon_deg;             // longitude (decimal degrees)
             float  alt_m;               // altitude MSL (meters)
 
-            uint8_t fix;                // GPS fix status (0 or 1)
             uint8_t fixqual;            // GPS fix quality (number of satellites)
 
             float heading_deg;          // GPS heading (degrees)
@@ -72,7 +71,6 @@
             sizeof(float) +            // temp_C
             2*sizeof(double) +         // lat_deg, lon_deg
             sizeof(float) +            // alt_m
-            sizeof(uint8_t) +          // fix
             sizeof(uint8_t) +          // fixqual
             sizeof(float);             // heading_deg
 
