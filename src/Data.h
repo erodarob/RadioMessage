@@ -38,7 +38,7 @@ public:
     // - stopCond: the char to look for to stop the substring
     // - dest: the string to place the substring into
     // - szDest: the size of the ```dest``` string
-    bool extractStr(char *src, int szSource, const char *lookFor, char stopCond, char *dest, int szDest = -1)
+    static bool extractStr(char *src, int szSource, const char *lookFor, char stopCond, char *dest, int szDest = -1)
     {
         // find to position of the start of the lookFor string
         char *strPos = strstr(src, lookFor);
