@@ -80,29 +80,140 @@ HITLData HITLData::parser(std::FILE *file)
 }
 
 
-// uint16_t HITLData::encode(uint8_t *data, uint16_t sz){
+uint16_t HITLData::encode(uint8_t *data, uint16_t sz){
 
-//     uint16_t pos = 0;
+    uint16_t pos = 0;
 
-//     if(sz < this->PAYLOAD_SIZE){
-//         return 0; //error, size is too small 
+    const uint16_t totalSize = static_cast<uint16_t>(PAYLOAD_SIZE);
+    if (sz < totalSize)
+        this->error = Error::TooSmall; //error: provided buffer too small
+        return 0;
+
+      std::memcpy(&data[pos], &timestamp_s, sizeof(timestamp_s));
+    pos += sizeof(timestamp_s);
+
+    std::memcpy(&data[pos], &ax, sizeof(ax));
+    pos += sizeof(ax);
+    std::memcpy(&data[pos], &ay, sizeof(ay));
+    pos += sizeof(ay);
+    std::memcpy(&data[pos], &az, sizeof(az));
+    pos += sizeof(az);
+
+    std::memcpy(&data[pos], &gx, sizeof(gx));
+    pos += sizeof(gx);
+    std::memcpy(&data[pos], &gy, sizeof(gy));
+    pos += sizeof(gy);
+    std::memcpy(&data[pos], &gz, sizeof(gz));
+    pos += sizeof(gz);
+
+    std::memcpy(&data[pos], &mx, sizeof(mx));
+    pos += sizeof(mx);
+    std::memcpy(&data[pos], &my, sizeof(my));
+    pos += sizeof(my);
+    std::memcpy(&data[pos], &mz, sizeof(mz));
+    pos += sizeof(mz);
+
+    std::memcpy(&data[pos], &pressure_hPa, sizeof(pressure_hPa));
+    pos += sizeof(pressure_hPa);
+
+    std::memcpy(&data[pos], &temp_C, sizeof(temp_C));
+    pos += sizeof(temp_C);
+
+    std::memcpy(&data[pos], &lat_deg, sizeof(lat_deg));
+    pos += sizeof(lat_deg);
+    std::memcpy(&data[pos], &lon_deg, sizeof(lon_deg));
+    pos += sizeof(lon_deg);
+
+    std::memcpy(&data[pos], &alt_m, sizeof(alt_m));
+    pos += sizeof(alt_m);
+
+    std::memcpy(&data[pos], &fixqual, sizeof(fixqual));
+    pos += sizeof(fixqual);
+
+    std::memcpy(&data[pos], &heading_deg, sizeof(heading_deg));
+    pos += sizeof(heading_deg);
+
+    // ---- sanity check ----
+//     if (pos != totalSize) {
+//             this->error = Error::EncodeError; //error: encoding error
+//             return 0;
 //     }
+    return pos;
 
-//     if(this->type != 0x09){
-//         return 0; //type is not HITLData
-//     }
+}
 
-//     data[pos++] = this->type;
-//     data[pos++] = (uint8_t)this->timestamp_s;
-//     data[pos++] = (uint8_t)this->ax;
-//     data[pos++] = (uint8_t)this->ay;
-//     data[pos++] = (uint8_t)this->az; //this is defintely wrong, will get a lot of stuff "forgotten" because i'm casting a float 
-//                                      // which is around 4 bytes into an 8 bit unsigned int (1 byte unsigned int)
+ uint16_t HITLData::decode(uint8_t *data, uint16_t sz){
 
+      if(data != nullptr){
+       
+            uint16_t pos = 0;
 
+            if(sz < static_cast<uint16_t>(1 + PAYLOAD_SIZE)){
+            this->error = Error::TooSmall; //error: provided buffer too small
+            return 0;
+            }
 
+            std::memcpy(&timestamp_s, &data[pos], sizeof(timestamp_s));
+            pos += sizeof(timestamp_s);
 
-// }
+            std::memcpy(&ax, &data[pos], sizeof(ax));
+            pos += sizeof(ax);
+
+            std::memcpy(&ay, &data[pos], sizeof(ay));
+            pos += sizeof(ay);
+
+            std::memcpy(&az, &data[pos], sizeof(az));
+            pos += sizeof(az);
+
+            std::memcpy(&gx, &data[pos], sizeof(gx));
+            pos += sizeof(gx);
+            
+            std::memcpy(&gy, &data[pos], sizeof(gy));
+            pos += sizeof(gy);
+
+            std::memcpy(&gz, &data[pos], sizeof(gz));
+            pos += sizeof(gz);
+
+            std::memcpy(&mx, &data[pos], sizeof(mx));
+            pos += sizeof(mx);
+
+            std::memcpy(&my, &data[pos], sizeof(my));
+            pos += sizeof(my);
+
+            std::memcpy(&mz, &data[pos], sizeof(mz));
+            pos += sizeof(mz);
+
+            std::memcpy(&pressure_hPa, &data[pos], sizeof(pressure_hPa));
+            pos += sizeof(pressure_hPa);
+
+            std::memcpy(&temp_C, &data[pos], sizeof(temp_C));
+            pos += sizeof(temp_C);
+
+            std::memcpy(&lat_deg, &data[pos], sizeof(lat_deg));
+            pos += sizeof(lat_deg);
+
+            std::memcpy(&lon_deg, &data[pos], sizeof(lon_deg));
+            pos += sizeof(lon_deg);
+
+            std::memcpy(&alt_m, &data[pos], sizeof(alt_m));
+            pos += sizeof(alt_m);
+
+            std::memcpy(&fixqual, &data[pos], sizeof(fixqual));
+            pos += sizeof(fixqual);
+
+            std::memcpy(&heading_deg, &data[pos], sizeof(heading_deg));
+            pos += sizeof(heading_deg);
+
+            // ---- sanity check ----
+            // if (pos != static_cast<uint16_t>(1 + PAYLOAD_SIZE)) {
+            // this->error = Error::DecodeError; //error: decoding error
+            // return 0;
+            // }
+            return pos;
+
+      }
+
+}
 
 
 

@@ -8,6 +8,17 @@
 
     class HITLData : public Data {
         public: 
+
+            enum class Error : uint8_t {
+            OK = 0,
+            TooSmall = 1,
+            WrongType = 2,
+            EncodeError = 3,
+            DecodeError = 4
+            };
+
+            Error error = Error::OK; //to store any errors that may occur during encoding/decoding
+
             HITLData();//complete default contructor, everything intialized to zero
 
             HITLData(float _timestamp_s, 
@@ -60,7 +71,7 @@
             float heading_deg;          // GPS heading (degrees)
 
 
-           static constexpr uint8_t type = 0x09; //default stream type for HITLData
+           static const uint8_t type = 0x09; //default stream type for HITLData
 
            static constexpr uint16_t PAYLOAD_SIZE = //size of serialized HITLData
             sizeof(float) +            // timestamp_s
