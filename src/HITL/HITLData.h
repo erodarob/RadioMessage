@@ -9,15 +9,6 @@
     class HITLData : public Data {
         public: 
 
-            enum class Error : uint8_t {
-            OK = 0,
-            TooSmall = 1,
-            WrongType = 2,
-            EncodeError = 3,
-            DecodeError = 4
-            };
-
-            Error error = Error::OK; //to store any errors that may occur during encoding/decoding
 
             HITLData();//complete default contructor, everything intialized to zero
 
@@ -26,7 +17,7 @@
                      float _gx, float _gy, float _gz,
                      float _mx, float _my, float _mz,
                      float _pressure_hPa, float _temp_C,
-                     double _lat_deg, double _lon_deg, float _alt_m,
+                     float _lat_deg, float _lon_deg, float _alt_m,
                     uint8_t _fixqual, float _heading_deg);  //parameterized constructor
 
 
@@ -37,8 +28,6 @@
             uint16_t toJSON(char *json, uint16_t sz, int deviceId) override;
             uint16_t fromJSON(char *json, uint16_t sz, int &deviceId) override;
 
-            HITLData parser(std::FILE *file); //this parser is going to be used to scan a file and place every value in its 
-                                              //respective field 
 
             //these are the data memebers that we need to run the Avionics algorithms on 
             // ---- Time ----
@@ -62,8 +51,8 @@
             float temp_C;               // temperature (C)
 
             // ---- GPS ----
-            double lat_deg;             // latitude (decimal degrees)
-            double lon_deg;             // longitude (decimal degrees)
+            float lat_deg;             // latitude (decimal degrees)
+            float lon_deg;             // longitude (decimal degrees)
             float  alt_m;               // altitude MSL (meters)
 
             uint8_t fixqual;            // GPS fix quality (number of satellites)
@@ -80,7 +69,7 @@
             3*sizeof(float) +          // mx, my, mz
             sizeof(float) +            // pressure_hPa
             sizeof(float) +            // temp_C
-            2*sizeof(double) +         // lat_deg, lon_deg
+            2*sizeof(float) +         // lat_deg, lon_deg
             sizeof(float) +            // alt_m
             sizeof(uint8_t) +          // fixqual
             sizeof(float);             // heading_deg

@@ -10,7 +10,7 @@
                   gx(0.0f), gy(0.0f), gz(0.0f),
                   mx(0.0f), my(0.0f), mz(0.0f),
                   pressure_hPa(0.0f), temp_C(0.0f),
-                  lat_deg(0.0), lon_deg(0.0), alt_m(0.0f),
+                  lat_deg(0.0f), lon_deg(0.0f), alt_m(0.0f),
                   fixqual(0), heading_deg(0.0f)
             {} //complete default contructor, everything intialized to zero
 
@@ -19,7 +19,7 @@ HITLData::HITLData(float _timestamp_s,
                      float _gx, float _gy, float _gz,
                      float _mx, float _my, float _mz,
                      float _pressure_hPa, float _temp_C,
-                     double _lat_deg, double _lon_deg, float _alt_m,
+                     float _lat_deg, float _lon_deg, float _alt_m,
                   uint8_t _fixqual, float _heading_deg)
                 : timestamp_s(_timestamp_s), ax(_ax), ay(_ay), az(_az),
                   gx(_gx), gy(_gy), gz(_gz),
@@ -30,63 +30,12 @@ HITLData::HITLData(float _timestamp_s,
             {} //parameterized constructor
 
 
-
-HITLData HITLData::parser(std::FILE *file)
-{
-    if (file == nullptr) {
-        throw std::invalid_argument("HITLData::parser: file is null");
-    }
-
-    HITLData out;
-    char line[512];
-
-    while (std::fgets(line, sizeof(line), file) != nullptr) {
-        // Skip empty/comment lines
-        if (line[0] == '\n' || line[0] == '\r' || line[0] == '\0' || line[0] == '#') {
-            continue;
-        }
-
-        unsigned int fixqual_int = 0; // parse uint8 safely via wider type
-
-        int itemsParsed = std::sscanf(
-            line,
-            "%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%lf,%lf,%f,%u,%f",
-            &out.timestamp_s,
-            &out.ax, &out.ay, &out.az,
-            &out.gx, &out.gy, &out.gz,
-            &out.mx, &out.my, &out.mz,
-            &out.pressure_hPa,
-            &out.temp_C,
-            &out.lat_deg,
-            &out.lon_deg,
-            &out.alt_m,
-            &fixqual_int,
-            &out.heading_deg
-        );
-
-        if (itemsParsed != 17) {
-            throw std::runtime_error("HITLData::parser: CSV parse failed (expected 17 fields)");
-        }
-
-        if (fixqual_int > 255) {
-            throw std::runtime_error("HITLData::parser: fixqual out of uint8_t range");
-        }
-        out.fixqual = static_cast<uint8_t>(fixqual_int);
-
-        return out; // return one parsed row
-    }
-
-    throw std::runtime_error("HITLData::parser: EOF (no more data)");
-}
-
-
 uint16_t HITLData::encode(uint8_t *data, uint16_t sz){
 
     uint16_t pos = 0;
 
     const uint16_t totalSize = static_cast<uint16_t>(PAYLOAD_SIZE);
-    if (sz < totalSize)
-        this->error = Error::TooSmall; //error: provided buffer too small
+    if (sz < totalSize) //error: provided buffer too small
         return 0;
 
       std::memcpy(&data[pos], &timestamp_s, sizeof(timestamp_s));
@@ -133,11 +82,10 @@ uint16_t HITLData::encode(uint8_t *data, uint16_t sz){
     std::memcpy(&data[pos], &heading_deg, sizeof(heading_deg));
     pos += sizeof(heading_deg);
 
-    // ---- sanity check ----
-//     if (pos != totalSize) {
-//             this->error = Error::EncodeError; //error: encoding error
-//             return 0;
-//     }
+
+    if (pos != totalSize) {  //error: encoding error
+            return 0;
+    }
     return pos;
 
 }
@@ -148,8 +96,7 @@ uint16_t HITLData::encode(uint8_t *data, uint16_t sz){
        
             uint16_t pos = 0;
 
-            if(sz < static_cast<uint16_t>(1 + PAYLOAD_SIZE)){
-            this->error = Error::TooSmall; //error: provided buffer too small
+            if(sz < static_cast<uint16_t>(PAYLOAD_SIZE)){ //error: provided buffer too small
             return 0;
             }
 
@@ -204,16 +151,167 @@ uint16_t HITLData::encode(uint8_t *data, uint16_t sz){
             std::memcpy(&heading_deg, &data[pos], sizeof(heading_deg));
             pos += sizeof(heading_deg);
 
-            // ---- sanity check ----
-            // if (pos != static_cast<uint16_t>(1 + PAYLOAD_SIZE)) {
-            // this->error = Error::DecodeError; //error: decoding error
-            // return 0;
-            // }
+            if (pos != static_cast<uint16_t>(PAYLOAD_SIZE)) { //error: decoding error
+            return 0;
+            }
             return pos;
 
       }
 
 }
+
+uint16_t HITLData::toJSON(char *json, uint16_t sz, int deviceId){
+    
+    uint16_t result = (uint16_t) snprintf(
+            json,
+            sz,
+            "{"
+            "\"type\":\"HITLData\","
+            "\"deviceId\":%d,"
+            "\"data\":{"
+                "\"t\":%.7f,"
+                "\"ax\":%.7f,\"ay\":%.7f,\"az\":%.7f,"
+                "\"gx\":%.7f,\"gy\":%.7f,\"gz\":%.7f,"
+                "\"mx\":%.7f,\"my\":%.7f,\"mz\":%.7f,"
+                "\"pressure_hPa\":%.7f,"
+                "\"temp_C\":%.7f,"
+                "\"lat\":%.7f,"
+                "\"lon\":%.7f,"
+                "\"alt_m\":%.7f,"
+                "\"fixqual\":%u,"
+                "\"heading_deg\":%.7f"
+            "}"
+            "}",
+            deviceId,
+            timestamp_s,
+            ax, ay, az,
+            gx, gy, gz,
+            mx, my, mz,
+            pressure_hPa,
+            temp_C,
+            lat_deg,
+            lon_deg,
+            alt_m,
+            fixqual,
+            heading_deg
+        );
+
+    if (result < sz)
+    {
+        // ran properly
+        return result;
+    }
+    // output too large
+    return 0;
+    
+ }
+
+ uint16_t HITLData::fromJSON(char *json, uint16_t sz, int &deviceId){
+        // ---- buffers for extracted strings ----
+    char deviceIdStr[8] = {0};
+    char tStr[18] = {0};
+
+    char axStr[18] = {0};
+    char ayStr[18] = {0};
+    char azStr[18] = {0};
+
+    char gxStr[18] = {0};
+    char gyStr[18] = {0};
+    char gzStr[18] = {0};
+
+    char mxStr[18] = {0};
+    char myStr[18] = {0};
+    char mzStr[18] = {0};
+
+    char pressureStr[18] = {0};
+    char tempStr[18] = {0};
+
+    char latStr[18] = {0};
+    char lonStr[18] = {0};
+
+    char altStr[18] = {0};
+    char fixqualStr[8] = {0};
+    char headingStr[18] = {0};
+
+    // ---- extract fields ----
+    if (!extractStr(json, sz, "\"deviceId\":", ',', deviceIdStr, sizeof(deviceIdStr)))
+        return 0;
+
+    if (!extractStr(json, sz, "\"t\":", ',', tStr, sizeof(tStr)))
+        return 0;
+
+    if (!extractStr(json, sz, "\"ax\":", ',', axStr, sizeof(axStr)))
+        return 0;
+    if (!extractStr(json, sz, "\"ay\":", ',', ayStr, sizeof(ayStr)))
+        return 0;
+    if (!extractStr(json, sz, "\"az\":", ',', azStr, sizeof(azStr)))
+        return 0;
+
+    if (!extractStr(json, sz, "\"gx\":", ',', gxStr, sizeof(gxStr)))
+        return 0;
+    if (!extractStr(json, sz, "\"gy\":", ',', gyStr, sizeof(gyStr)))
+        return 0;
+    if (!extractStr(json, sz, "\"gz\":", ',', gzStr, sizeof(gzStr)))
+        return 0;
+
+    if (!extractStr(json, sz, "\"mx\":", ',', mxStr, sizeof(mxStr)))
+        return 0;
+    if (!extractStr(json, sz, "\"my\":", ',', myStr, sizeof(myStr)))
+        return 0;
+    if (!extractStr(json, sz, "\"mz\":", ',', mzStr, sizeof(mzStr)))
+        return 0;
+
+    if (!extractStr(json, sz, "\"pressure_hPa\":", ',', pressureStr, sizeof(pressureStr)))
+        return 0;
+    if (!extractStr(json, sz, "\"temp_C\":", ',', tempStr, sizeof(tempStr)))
+        return 0;
+
+    if (!extractStr(json, sz, "\"lat\":", ',', latStr, sizeof(latStr)))
+        return 0;
+    if (!extractStr(json, sz, "\"lon\":", ',', lonStr, sizeof(lonStr)))
+        return 0;
+
+    if (!extractStr(json, sz, "\"alt_m\":", ',', altStr, sizeof(altStr)))
+        return 0;
+
+    if (!extractStr(json, sz, "\"fixqual\":", ',', fixqualStr, sizeof(fixqualStr)))
+        return 0;
+
+    // last field ends with '}'
+    if (!extractStr(json, sz, "\"heading_deg\":", '}', headingStr, sizeof(headingStr)))
+        return 0;
+
+    // ---- convert to numeric types ----
+    deviceId = atoi(deviceIdStr);
+
+    timestamp_s = (float)atof(tStr);
+
+    ax = (float)atof(axStr);
+    ay = (float)atof(ayStr);
+    az = (float)atof(azStr);
+
+    gx = (float)atof(gxStr);
+    gy = (float)atof(gyStr);
+    gz = (float)atof(gzStr);
+
+    mx = (float)atof(mxStr);
+    my = (float)atof(myStr);
+    mz = (float)atof(mzStr);
+
+    pressure_hPa = (float)atof(pressureStr);
+    temp_C = (float)atof(tempStr);
+
+    lat_deg = (float)atof(latStr);
+    lon_deg = (float)atof(lonStr);
+
+    alt_m = (float)atof(altStr);
+
+    fixqual = (uint8_t)atoi(fixqualStr);
+    heading_deg = (float)atof(headingStr);
+
+    return 1;
+
+ }
 
 
 
