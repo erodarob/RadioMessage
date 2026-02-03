@@ -30,134 +30,35 @@ HITLData::HITLData(float _timestamp_s,
             {} //parameterized constructor
 
 
-uint16_t HITLData::encode(uint8_t *data, uint16_t sz){
+//encode sends string data instead of binary data becuase of worries of 
+//little-endian vs big-endian issues with binary data across different hardware, 
+//and also because JSON is human readable and easier to debug
 
-    uint16_t pos = 0;
+uint16_t HITLData::encode(uint8_t *data, uint16_t sz)
+{
+    if (data == nullptr) return 0;
+    if (sz < 2) return 0;
 
-    const uint16_t totalSize = static_cast<uint16_t>(PAYLOAD_SIZE);
-    if (sz < totalSize) //error: provided buffer too small
-        return 0;
+    // Write JSON into the outgoing buffer as text
+    int deviceId = 0; // need to fix
+    uint16_t n = toJSON(reinterpret_cast<char*>(data), (uint16_t)(sz), deviceId); 
+    if (n == 0) return 0;
 
-      std::memcpy(&data[pos], &timestamp_s, sizeof(timestamp_s));
-    pos += sizeof(timestamp_s);
-
-    std::memcpy(&data[pos], &ax, sizeof(ax));
-    pos += sizeof(ax);
-    std::memcpy(&data[pos], &ay, sizeof(ay));
-    pos += sizeof(ay);
-    std::memcpy(&data[pos], &az, sizeof(az));
-    pos += sizeof(az);
-
-    std::memcpy(&data[pos], &gx, sizeof(gx));
-    pos += sizeof(gx);
-    std::memcpy(&data[pos], &gy, sizeof(gy));
-    pos += sizeof(gy);
-    std::memcpy(&data[pos], &gz, sizeof(gz));
-    pos += sizeof(gz);
-
-    std::memcpy(&data[pos], &mx, sizeof(mx));
-    pos += sizeof(mx);
-    std::memcpy(&data[pos], &my, sizeof(my));
-    pos += sizeof(my);
-    std::memcpy(&data[pos], &mz, sizeof(mz));
-    pos += sizeof(mz);
-
-    std::memcpy(&data[pos], &pressure_hPa, sizeof(pressure_hPa));
-    pos += sizeof(pressure_hPa);
-
-    std::memcpy(&data[pos], &temp_C, sizeof(temp_C));
-    pos += sizeof(temp_C);
-
-    std::memcpy(&data[pos], &lat_deg, sizeof(lat_deg));
-    pos += sizeof(lat_deg);
-    std::memcpy(&data[pos], &lon_deg, sizeof(lon_deg));
-    pos += sizeof(lon_deg);
-
-    std::memcpy(&data[pos], &alt_m, sizeof(alt_m));
-    pos += sizeof(alt_m);
-
-    std::memcpy(&data[pos], &fixqual, sizeof(fixqual));
-    pos += sizeof(fixqual);
-
-    std::memcpy(&data[pos], &heading_deg, sizeof(heading_deg));
-    pos += sizeof(heading_deg);
-
-
-    if (pos != totalSize) {  //error: encoding error
-            return 0;
-    }
-    return pos;
-
+    return n;         // number of bytes of JSON (not counting '\0')
 }
 
- uint16_t HITLData::decode(uint8_t *data, uint16_t sz){
 
-      if(data != nullptr){
-       
-            uint16_t pos = 0;
+//decode reads string data instead of binary data becuase of worries of
+//little-endian vs big-endian issues with binary data across different hardware,
+//and also because JSON is human readable and easier to debug
+ uint16_t HITLData::decode(uint8_t *data, uint16_t sz)
+{
+    if (data == nullptr) return 0;
 
-            if(sz < static_cast<uint16_t>(PAYLOAD_SIZE)){ //error: provided buffer too small
-            return 0;
-            }
-
-            std::memcpy(&timestamp_s, &data[pos], sizeof(timestamp_s));
-            pos += sizeof(timestamp_s);
-
-            std::memcpy(&ax, &data[pos], sizeof(ax));
-            pos += sizeof(ax);
-
-            std::memcpy(&ay, &data[pos], sizeof(ay));
-            pos += sizeof(ay);
-
-            std::memcpy(&az, &data[pos], sizeof(az));
-            pos += sizeof(az);
-
-            std::memcpy(&gx, &data[pos], sizeof(gx));
-            pos += sizeof(gx);
-            
-            std::memcpy(&gy, &data[pos], sizeof(gy));
-            pos += sizeof(gy);
-
-            std::memcpy(&gz, &data[pos], sizeof(gz));
-            pos += sizeof(gz);
-
-            std::memcpy(&mx, &data[pos], sizeof(mx));
-            pos += sizeof(mx);
-
-            std::memcpy(&my, &data[pos], sizeof(my));
-            pos += sizeof(my);
-
-            std::memcpy(&mz, &data[pos], sizeof(mz));
-            pos += sizeof(mz);
-
-            std::memcpy(&pressure_hPa, &data[pos], sizeof(pressure_hPa));
-            pos += sizeof(pressure_hPa);
-
-            std::memcpy(&temp_C, &data[pos], sizeof(temp_C));
-            pos += sizeof(temp_C);
-
-            std::memcpy(&lat_deg, &data[pos], sizeof(lat_deg));
-            pos += sizeof(lat_deg);
-
-            std::memcpy(&lon_deg, &data[pos], sizeof(lon_deg));
-            pos += sizeof(lon_deg);
-
-            std::memcpy(&alt_m, &data[pos], sizeof(alt_m));
-            pos += sizeof(alt_m);
-
-            std::memcpy(&fixqual, &data[pos], sizeof(fixqual));
-            pos += sizeof(fixqual);
-
-            std::memcpy(&heading_deg, &data[pos], sizeof(heading_deg));
-            pos += sizeof(heading_deg);
-
-            if (pos != static_cast<uint16_t>(PAYLOAD_SIZE)) { //error: decoding error
-            return 0;
-            }
-            return pos;
-
-      }
-
+    int deviceId = 0; //need to fix
+    // Interpret incoming bytes as a JSON string and parse it
+    uint16_t ok = fromJSON(reinterpret_cast<char*>(data), sz, deviceId);
+    return ok ? 1 : 0;
 }
 
 uint16_t HITLData::toJSON(char *json, uint16_t sz, int deviceId){
