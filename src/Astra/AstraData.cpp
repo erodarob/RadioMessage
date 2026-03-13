@@ -1,11 +1,10 @@
-//Created by Divyansh Srivastava on 1/13/2026
-//This is the implementation file for the ASTRAData class defined within ASTRAData.h
-//This class will be used ot carry filtered output post state estimation for HITL purposes
-//This class holds FILTERED / FUSED outputs (State = Mahony attitude + Linear KF translation)
-//Used for polymorphic data transmission through RadioMessage
+// Created by Divyansh Srivastava on 1/13/2026
+// This is the implementation file for the ASTRAData class defined within ASTRAData.h
+// This class will be used ot carry filtered output post state estimation for HITL purposes
+// This class holds FILTERED / FUSED outputs (State = Mahony attitude + Linear KF translation)
+// Used for polymorphic data transmission through RadioMessage
 
 #include "AstraData.h"
-
 
 ASTRAData::ASTRAData()
     : timestamp_s(0.0f),
@@ -40,41 +39,41 @@ uint16_t ASTRAData::encode(uint8_t *data, uint16_t sz)
     if (sz < totalSize)
         return 0; // provided buffer too small
 
-    std::memcpy(&data[pos], &timestamp_s, sizeof(timestamp_s));
+    memcpy(&data[pos], &timestamp_s, sizeof(timestamp_s));
     pos += sizeof(timestamp_s);
 
     // position
-    std::memcpy(&data[pos], &px, sizeof(px));
+    memcpy(&data[pos], &px, sizeof(px));
     pos += sizeof(px);
-    std::memcpy(&data[pos], &py, sizeof(py));
+    memcpy(&data[pos], &py, sizeof(py));
     pos += sizeof(py);
-    std::memcpy(&data[pos], &pz, sizeof(pz));
+    memcpy(&data[pos], &pz, sizeof(pz));
     pos += sizeof(pz);
 
     // velocity
-    std::memcpy(&data[pos], &vx, sizeof(vx));
+    memcpy(&data[pos], &vx, sizeof(vx));
     pos += sizeof(vx);
-    std::memcpy(&data[pos], &vy, sizeof(vy));
+    memcpy(&data[pos], &vy, sizeof(vy));
     pos += sizeof(vy);
-    std::memcpy(&data[pos], &vz, sizeof(vz));
+    memcpy(&data[pos], &vz, sizeof(vz));
     pos += sizeof(vz);
 
     // earth-frame acceleration (control input used in KF predict)
-    std::memcpy(&data[pos], &ax_e, sizeof(ax_e));
+    memcpy(&data[pos], &ax_e, sizeof(ax_e));
     pos += sizeof(ax_e);
-    std::memcpy(&data[pos], &ay_e, sizeof(ay_e));
+    memcpy(&data[pos], &ay_e, sizeof(ay_e));
     pos += sizeof(ay_e);
-    std::memcpy(&data[pos], &az_e, sizeof(az_e));
+    memcpy(&data[pos], &az_e, sizeof(az_e));
     pos += sizeof(az_e);
 
     // quaternion
-    std::memcpy(&data[pos], &qw, sizeof(qw));
+    memcpy(&data[pos], &qw, sizeof(qw));
     pos += sizeof(qw);
-    std::memcpy(&data[pos], &qx, sizeof(qx));
+    memcpy(&data[pos], &qx, sizeof(qx));
     pos += sizeof(qx);
-    std::memcpy(&data[pos], &qy, sizeof(qy));
+    memcpy(&data[pos], &qy, sizeof(qy));
     pos += sizeof(qy);
-    std::memcpy(&data[pos], &qz, sizeof(qz));
+    memcpy(&data[pos], &qz, sizeof(qz));
     pos += sizeof(qz);
 
     if (pos != totalSize)
@@ -94,41 +93,41 @@ uint16_t ASTRAData::decode(uint8_t *data, uint16_t sz)
     if (sz < totalSize)
         return 0; // provided buffer too small
 
-    std::memcpy(&timestamp_s, &data[pos], sizeof(timestamp_s));
+    memcpy(&timestamp_s, &data[pos], sizeof(timestamp_s));
     pos += sizeof(timestamp_s);
 
     // position
-    std::memcpy(&px, &data[pos], sizeof(px));
+    memcpy(&px, &data[pos], sizeof(px));
     pos += sizeof(px);
-    std::memcpy(&py, &data[pos], sizeof(py));
+    memcpy(&py, &data[pos], sizeof(py));
     pos += sizeof(py);
-    std::memcpy(&pz, &data[pos], sizeof(pz));
+    memcpy(&pz, &data[pos], sizeof(pz));
     pos += sizeof(pz);
 
     // velocity
-    std::memcpy(&vx, &data[pos], sizeof(vx));
+    memcpy(&vx, &data[pos], sizeof(vx));
     pos += sizeof(vx);
-    std::memcpy(&vy, &data[pos], sizeof(vy));
+    memcpy(&vy, &data[pos], sizeof(vy));
     pos += sizeof(vy);
-    std::memcpy(&vz, &data[pos], sizeof(vz));
+    memcpy(&vz, &data[pos], sizeof(vz));
     pos += sizeof(vz);
 
     // earth-frame acceleration
-    std::memcpy(&ax_e, &data[pos], sizeof(ax_e));
+    memcpy(&ax_e, &data[pos], sizeof(ax_e));
     pos += sizeof(ax_e);
-    std::memcpy(&ay_e, &data[pos], sizeof(ay_e));
+    memcpy(&ay_e, &data[pos], sizeof(ay_e));
     pos += sizeof(ay_e);
-    std::memcpy(&az_e, &data[pos], sizeof(az_e));
+    memcpy(&az_e, &data[pos], sizeof(az_e));
     pos += sizeof(az_e);
 
     // quaternion
-    std::memcpy(&qw, &data[pos], sizeof(qw));
+    memcpy(&qw, &data[pos], sizeof(qw));
     pos += sizeof(qw);
-    std::memcpy(&qx, &data[pos], sizeof(qx));
+    memcpy(&qx, &data[pos], sizeof(qx));
     pos += sizeof(qx);
-    std::memcpy(&qy, &data[pos], sizeof(qy));
+    memcpy(&qy, &data[pos], sizeof(qy));
     pos += sizeof(qy);
-    std::memcpy(&qz, &data[pos], sizeof(qz));
+    memcpy(&qz, &data[pos], sizeof(qz));
     pos += sizeof(qz);
 
     if (pos != totalSize)
@@ -149,11 +148,11 @@ uint16_t ASTRAData::toJSON(char *json, uint16_t sz, int deviceId)
         "\"type\":\"ASTRAData\","
         "\"deviceId\":%d,"
         "\"data\":{"
-            "\"t\":%.7f,"
-            "\"px\":%.7f,\"py\":%.7f,\"pz\":%.7f,"
-            "\"vx\":%.7f,\"vy\":%.7f,\"vz\":%.7f,"
-            "\"ax_e\":%.7f,\"ay_e\":%.7f,\"az_e\":%.7f,"
-            "\"qw\":%.7f,\"qx\":%.7f,\"qy\":%.7f,\"qz\":%.7f"
+        "\"t\":%.7f,"
+        "\"px\":%.7f,\"py\":%.7f,\"pz\":%.7f,"
+        "\"vx\":%.7f,\"vy\":%.7f,\"vz\":%.7f,"
+        "\"ax_e\":%.7f,\"ay_e\":%.7f,\"az_e\":%.7f,"
+        "\"qw\":%.7f,\"qx\":%.7f,\"qy\":%.7f,\"qz\":%.7f"
         "}"
         "}",
         deviceId,
