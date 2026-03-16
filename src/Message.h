@@ -78,13 +78,13 @@ public:
     Message *get(uint8_t *data, uint16_t &sz, uint16_t start, uint16_t end);
 
 #ifdef ARDUINO
-    // prints the contents of the message over ```Serial```
+    // prints the contents of the message over ```Serial```, \n terminated
     // Note: video not supported
-    Message *print(Stream &Serial);
+    Message *print(Stream &s);
 
     // writes the contents of the message over ```Serial```
     // Note: video supported
-    Message *write(Stream &Serial);
+    Message *write(Stream &s);
 #elif defined(_WIN32) || defined(_WIN64) || defined(__unix__) || defined(__APPLE__)
     // prints the contents of the message to stdout
     // Note: video not supported
