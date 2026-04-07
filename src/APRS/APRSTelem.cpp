@@ -12,7 +12,7 @@ APRSTelem::APRSTelem(APRSConfig config, double lat, double lng, double alt, doub
     this->orient[2] = orient[2];
 }
 
-APRSTelem::APRSTelem(APRSConfig config, double lat, double lng, double alt, double spd, double hdg, double orient[3], uint8_t *stateFlags, uint8_t *encoding, uint8_t length)
+APRSTelem::APRSTelem(APRSConfig config, double lat, double lng, double alt, double spd, double hdg, double orient[3], uint64_t *stateFlags, uint8_t *encoding, uint8_t length)
     : APRSData(config), lat(lat), lng(lng), alt(alt), spd(spd), hdg(hdg), stateFlags(encoding, length)
 {
     this->orient[0] = orient[0];
@@ -22,7 +22,7 @@ APRSTelem::APRSTelem(APRSConfig config, double lat, double lng, double alt, doub
     this->stateFlags.pack(stateFlags);
 }
 
-bool APRSTelem::getStateFlags(uint8_t *flags)
+bool APRSTelem::getStateFlags(uint64_t *flags)
 {
     return this->stateFlags.unpack(flags);
 }

@@ -43,9 +43,9 @@ public:
     // - orient[3] : the current XYZ orientation (degrees)
     // - stateFlags : various data representing the state of the rocket
     APRSTelem(APRSConfig config, double lat, double lng, double alt, double spd, double hdg, double orient[3], uint32_t stateFlags);
-    APRSTelem(APRSConfig config, double lat, double lng, double alt, double spd, double hdg, double orient[3], uint8_t *stateFlags, uint8_t *encoding, uint8_t length);
+    APRSTelem(APRSConfig config, double lat, double lng, double alt, double spd, double hdg, double orient[3], uint64_t *stateFlags, uint8_t *encoding, uint8_t length);
 
-    bool getStateFlags(uint8_t *flags);
+    bool getStateFlags(uint64_t *flags);
 
     // encode the data stored in the ```Data``` object and place the result in ```data```
     int encode(uint8_t *data, uint16_t sz) override;

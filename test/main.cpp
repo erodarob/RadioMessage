@@ -10,14 +10,14 @@ bool callback(char *cmd, uint16_t argc, char **argv);
 
 int main(int argc, char *argv[])
 {
-    uint8_t e[] = {1, 3, 3, 1, 4, 4};
+    uint8_t e[] = {1, 3, 3, 1, 4, 12};
     PackedNum test(e, sizeof(e));
-    uint8_t v[] = {0, 3, 2, 1, 15, 10};
+    uint64_t v[] = {0, 3, 2, 1, 15, 3000};
     test.pack(v);
     printf("%d\n", test.get());
-    uint8_t outV[6] = {0};
+    uint64_t outV[6] = {0};
     test.unpack(outV);
-    printf("%d %d %d %d %d %d\n", outV[0], outV[1], outV[2], outV[3], outV[4], outV[5]);
+    printf("%llu %llu %llu %llu %llu %llu\n", outV[0], outV[1], outV[2], outV[3], outV[4], outV[5]);
 
     Message m;
     char testJSON[20000] = {0};

@@ -155,7 +155,7 @@ bool PackedNum::setEncoding(const uint8_t *widths, int length)
     return true;
 }
 
-bool PackedNum::pack(uint8_t *vals)
+bool PackedNum::pack(uint64_t *vals)
 {
     int lengthAdded = 0;
     this->set((uint64_t)0);
@@ -191,7 +191,7 @@ bool PackedNum::pack(uint8_t *vals)
     return true;
 }
 
-bool PackedNum::unpack(uint8_t *vals)
+bool PackedNum::unpack(uint64_t *vals)
 {
     int lengthRemoved = 0;
     for (int i = 0; i < this->encodingLength; i++)

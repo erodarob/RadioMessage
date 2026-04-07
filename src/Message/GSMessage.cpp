@@ -62,7 +62,7 @@ bool GSMessage::decodeHeader(uint32_t header, uint8_t &streamType, uint8_t &stre
     PackedNum packedHeader(GSMessage::headerEncoding, GSMessage::headerEncodingLength);
     packedHeader.set(header);
     // unpack the data
-    uint8_t headerData[GSMessage::headerEncodingLength] = {0};
+    uint64_t headerData[GSMessage::headerEncodingLength] = {0};
     bool success = packedHeader.unpack(headerData);
 
     if (success)
@@ -88,7 +88,7 @@ bool GSMessage::decodeHeader(uint8_t *header, uint8_t &streamType, uint8_t &stre
     PackedNum packedHeader(GSMessage::headerEncoding, GSMessage::headerEncodingLength);
     packedHeader.set(header);
     // unpack the data
-    uint8_t headerData[GSMessage::headerEncodingLength] = {0};
+    uint64_t headerData[GSMessage::headerEncodingLength] = {0};
     bool success = packedHeader.unpack(headerData);
 
     if (success)
@@ -112,7 +112,7 @@ bool GSMessage::decodeHeader(uint32_t header)
     // ss = size (last 8 bites)
     this->header.set(header);
     // unpack the data
-    uint8_t headerData[GSMessage::headerEncodingLength] = {0};
+    uint64_t headerData[GSMessage::headerEncodingLength] = {0};
     bool success = this->header.unpack(headerData);
 
     if (success)
@@ -136,7 +136,7 @@ bool GSMessage::decodeHeader(uint8_t *header)
     // ss = size (last 8 bites)
     this->header.set(header);
     // unpack the data
-    uint8_t headerData[GSMessage::headerEncodingLength] = {0};
+    uint64_t headerData[GSMessage::headerEncodingLength] = {0};
     bool success = this->header.unpack(headerData);
 
     if (success)
@@ -162,7 +162,7 @@ bool GSMessage::decodeHeader()
         // ss = size (last 8 bites)
         this->header.set(this->buf);
         // unpack the data
-        uint8_t headerData[GSMessage::headerEncodingLength] = {0};
+        uint64_t headerData[GSMessage::headerEncodingLength] = {0};
         bool success = this->header.unpack(headerData);
 
         if (success)
@@ -218,7 +218,7 @@ Message *GSMessage::encode(uint8_t *data, uint16_t sz)
     // I = id (4 bits)
     // SS = size (first 8 bits)
     // ss = size (last 8 bites)
-    uint8_t headerData[] = {this->dataType, this->id, (uint8_t)(this->msgSize >> 8), (uint8_t)(this->msgSize & 0xFF)};
+    uint64_t headerData[] = {this->dataType, this->id, (uint8_t)(this->msgSize >> 8), (uint8_t)(this->msgSize & 0xFF)};
     header.pack(headerData);
     // place header in data
     // start at the beginning of the message, which means we need to remove the headerLen
@@ -265,7 +265,7 @@ Message *GSMessage::encode(Data *data)
     // I = id (4 bits)
     // SS = size (first 8 bits)
     // ss = size (last 8 bites)
-    uint8_t headerData[] = {this->dataType, this->id, (uint8_t)(this->msgSize >> 8), (uint8_t)(this->msgSize & 0xFF)};
+    uint64_t headerData[] = {this->dataType, this->id, (uint8_t)(this->msgSize >> 8), (uint8_t)(this->msgSize & 0xFF)};
     header.pack(headerData);
     // place header in data
     // start at the beginning of the message, which means we need to remove the headerLen

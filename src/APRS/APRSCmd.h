@@ -29,9 +29,9 @@ public:
     // - cmd : the command the send
     // - args : the arguments for ```cmd```
     APRSCmd(APRSConfig config, uint8_t cmd, uint16_t args);
-    APRSCmd(APRSConfig config, uint8_t cmd, uint8_t *args, uint8_t *encoding, uint8_t length);
+    APRSCmd(APRSConfig config, uint8_t cmd, uint64_t *args, uint8_t *encoding, uint8_t length);
 
-    bool getArgs(uint8_t *args);
+    bool getArgs(uint64_t *args);
 
     // encode the data stored in the ```Data``` object and place the result in ```data```
     int encode(uint8_t *data, uint16_t sz) override;

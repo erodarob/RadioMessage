@@ -68,10 +68,10 @@ public:
     bool setEncoding(const uint8_t *widths, int length);
     // encode values into the number based on encoding
     // - vals: the values to encode (same length as encoding)
-    bool pack(uint8_t *vals);
+    bool pack(uint64_t *vals);
     // decode into values from number based on encoding
     // - vals: an array to decode values into (same length as encoding)
-    bool unpack(uint8_t *vals);
+    bool unpack(uint64_t *vals);
 
     // set the value of the number, automatically truncated and converted to correct type
     // - n: the new number
