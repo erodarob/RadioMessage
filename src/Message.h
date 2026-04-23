@@ -16,9 +16,13 @@ using namespace std;
 class Message
 {
 public:
+#ifndef MSG_SIZE_OVRD
     // maximum message size
     static const uint16_t maxSize = 10e3;
-
+#else
+    // maximum message size
+    static const uint16_t maxSize = MSG_SIZE_OVRD;
+#endif
     // the buffer that stores the message data
     // acutal size is maxSize+1, but the last byte should always be 0 to prevent issues with C string functions
     uint8_t buf[maxSize + 1] = {0};

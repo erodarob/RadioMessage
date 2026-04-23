@@ -4,11 +4,11 @@ VideoData::VideoData(VideoEncoding encoding) : encoding(encoding)
 {
 }
 
-VideoData::VideoData(uint8_t *data, VideoEncoding encoding) : encoding(encoding), GenericData(data)
+VideoData::VideoData(uint8_t *data, VideoEncoding encoding) : GenericData(data), encoding(encoding)
 {
 }
 
-VideoData::VideoData(uint8_t *data, uint16_t sz, VideoEncoding encoding) : encoding(encoding), GenericData(data, sz)
+VideoData::VideoData(uint8_t *data, uint16_t sz, VideoEncoding encoding) : GenericData(data, sz), encoding(encoding)
 {
 }
 

@@ -7,11 +7,11 @@ GSControl::GSControl(const char *cmd)
 
 GSControl::GSControl(const char *cmd, const char *args)
 {
-    int cmdLen = strlen(cmd);
-    int argLen = strlen(args);
+    uint16_t cmdLen = strlen(cmd);
+    uint16_t argLen = strlen(args);
 
-    int validCmdLen = cmdLen > (sizeof(cmdBuf) - 1) ? (sizeof(cmdBuf) - 1) : cmdLen;
-    int validArgLen = argLen > (sizeof(argBuf) - 1) ? (sizeof(argBuf) - 1) : argLen;
+    uint16_t validCmdLen = cmdLen > (sizeof(cmdBuf) - 1) ? (sizeof(cmdBuf) - 1) : cmdLen;
+    uint16_t validArgLen = argLen > (sizeof(argBuf) - 1) ? (sizeof(argBuf) - 1) : argLen;
 
     memcpy(this->cmdBuf, cmd, validCmdLen);
     memcpy(this->argBuf, args, validArgLen);
@@ -24,9 +24,9 @@ GSControl::GSControl(const char *cmd, const char *args)
 GSControl::GSControl(const char *cmd, uint16_t argc, const char **argv)
 {
     // copy command
-    int cmdLen = strlen(cmd);
+    uint16_t cmdLen = strlen(cmd);
 
-    int validCmdLen = cmdLen > (sizeof(cmdBuf) - 1) ? (sizeof(cmdBuf) - 1) : cmdLen;
+    uint16_t validCmdLen = cmdLen > (sizeof(cmdBuf) - 1) ? (sizeof(cmdBuf) - 1) : cmdLen;
 
     memcpy(this->cmdBuf, cmd, validCmdLen);
     this->cmdBuf[validCmdLen] = 0; // ensure null termination
@@ -60,7 +60,7 @@ bool GSControl::processCmd(bool (*f)(char *, uint16_t, char **))
     uint16_t argc = 0;
     int maxArgLen = 0;
     int lastArgPos = 0;
-    for (int i = 0; i < strlen(this->argBuf); i++)
+    for (uint16_t i = 0; i < strlen(this->argBuf); i++)
     {
         if (this->argBuf[i] == ' ')
         {
@@ -130,24 +130,24 @@ uint16_t GSControl::encode(uint8_t *data, uint16_t sz)
 uint16_t GSControl::decode(uint8_t *data, uint16_t sz)
 {
     // assume typical command structure with spaces separating args
-    for (int i = 0; i < sz; i++)
+    for (uint16_t i = 0; i < sz; i++)
     {
         if (data[i] == ' ')
         {
             // copy command
             // cut this portion of the string at the max size of cmdBuf if it's too long
-            int cmdOffset = i > (sizeof(cmdBuf) - 1) ? (sizeof(cmdBuf) - 1) : i;
+            uint16_t cmdOffset = i > (sizeof(cmdBuf) - 1) ? (sizeof(cmdBuf) - 1) : i;
             memcpy(this->cmdBuf, data, cmdOffset);
             this->cmdBuf[cmdOffset] = 0; // ensure null terminated
             cmdOffset++;                 // skip space character
 
             // copy args
             // cut this portion of the string at the max size of argBuf if it's too long
-            int argLen = (sz - cmdOffset) > (sizeof(argBuf) - 1) ? (sizeof(argBuf) - 1) : (sz - cmdOffset);
+            uint16_t argLen = (sz - cmdOffset) > int(sizeof(argBuf) - 1) ? (sizeof(argBuf) - 1) : (sz - cmdOffset);
             memcpy(this->argBuf, data + cmdOffset, argLen);
             this->argBuf[argLen] = 0; // ensure null terminated
 
-            this->valid = !((sz - cmdOffset) > (sizeof(argBuf) - 1) || i > (sizeof(cmdBuf) - 1));
+            this->valid = !((sz - cmdOffset) > int(sizeof(argBuf) - 1) || i > (sizeof(cmdBuf) - 1));
             break;
         }
     }
