@@ -1,24 +1,13 @@
 #include "GSControl.h"
 
-GSControl::GSControl(const char *cmd)
+GSControl::GSControl(const char *data)
 {
-    this->decode((uint8_t *)cmd, strlen(cmd));
+    this->decode((uint8_t *)data, strlen(data));
 }
 
 GSControl::GSControl(const char *cmd, const char *args)
 {
-    uint16_t cmdLen = strlen(cmd);
-    uint16_t argLen = strlen(args);
-
-    uint16_t validCmdLen = cmdLen > (sizeof(cmdBuf) - 1) ? (sizeof(cmdBuf) - 1) : cmdLen;
-    uint16_t validArgLen = argLen > (sizeof(argBuf) - 1) ? (sizeof(argBuf) - 1) : argLen;
-
-    memcpy(this->cmdBuf, cmd, validCmdLen);
-    memcpy(this->argBuf, args, validArgLen);
-    this->cmdBuf[validCmdLen] = 0; // ensure null termination
-    this->argBuf[validArgLen] = 0;
-
-    this->valid = !(cmdLen > (sizeof(cmdBuf) - 1) || argLen > (sizeof(argBuf) - 1));
+    this->setCmd(cmd, args);
 }
 
 GSControl::GSControl(const char *cmd, uint16_t argc, const char **argv)
@@ -26,8 +15,10 @@ GSControl::GSControl(const char *cmd, uint16_t argc, const char **argv)
     // copy command
     uint16_t cmdLen = strlen(cmd);
 
+    // limit command length to the max length
     uint16_t validCmdLen = cmdLen > (sizeof(cmdBuf) - 1) ? (sizeof(cmdBuf) - 1) : cmdLen;
 
+    // copy the command
     memcpy(this->cmdBuf, cmd, validCmdLen);
     this->cmdBuf[validCmdLen] = 0; // ensure null termination
 
@@ -52,46 +43,79 @@ GSControl::GSControl(const char *cmd, uint16_t argc, const char **argv)
         }
     }
 
+    // check whether the assembled message represents the input
     this->valid = !(cmdLen > (sizeof(cmdBuf) - 1) || assembleArgsFail);
 }
 
-bool GSControl::processCmd(bool (*f)(char *, uint16_t, char **))
+void GSControl::setCmd(const char *cmd, const char *args)
 {
+    // get length of command and args
+    uint16_t cmdLen = strlen(cmd);
+    uint16_t argLen = strlen(args);
+
+    // check whether either is too long
+    uint16_t validCmdLen = cmdLen > (sizeof(cmdBuf) - 1) ? (sizeof(cmdBuf) - 1) : cmdLen;
+    uint16_t validArgLen = argLen > (sizeof(argBuf) - 1) ? (sizeof(argBuf) - 1) : argLen;
+
+    // copy the correct length
+    memcpy(this->cmdBuf, cmd, validCmdLen);
+    memcpy(this->argBuf, args, validArgLen);
+    this->cmdBuf[validCmdLen] = 0; // ensure null termination
+    this->argBuf[validArgLen] = 0;
+
+    // check whether the assembled message represents the input
+    this->valid = !(cmdLen > (sizeof(cmdBuf) - 1) || argLen > (sizeof(argBuf) - 1));
+}
+
+bool GSControl::processCmd(GSControl_CB f)
+{
+    // Notice: this code is prone to "off by one" errors, proceed with caution
+
+    // get number of args
     uint16_t argc = 0;
     int maxArgLen = 0;
     int lastArgPos = 0;
-    for (uint16_t i = 0; i < strlen(this->argBuf); i++)
+    int argsLen = strlen(this->argBuf);
+    for (int i = 0; i < argsLen; i++)
     {
-        if (this->argBuf[i] == ' ')
+        // new arg at space character or end of string
+        if (this->argBuf[i] == ' ' || i == argsLen - 1)
         {
             argc++;
-            if (maxArgLen < i - lastArgPos)
-                maxArgLen = i - lastArgPos;
+            // need to account for i being an index
+            // for a string of length 2
+            // i will be 1 at the end
+            // so i+1 is the length
+            if (maxArgLen < i + 1 - lastArgPos)
+                maxArgLen = i + 1 - lastArgPos;
             lastArgPos = i;
         }
     }
-    argc++; // add one since last arg doesn't have a space
 
+    // allocate memory for argv
     char **argv = new char *[argc];
     for (int i = 0; i < argc; i++)
         argv[i] = new char[maxArgLen + 1]; // add 1 for null terminator
 
+    // set argv
     int argIdx = 0;
     lastArgPos = 0;
-    int argsLen = strlen(this->argBuf);
     for (int i = 0; i < argsLen; i++)
     {
+        // new arg at space character or end of string
         if (this->argBuf[i] == ' ' || i == argsLen - 1)
         {
-            memcpy(argv[argIdx], this->argBuf + lastArgPos, i - lastArgPos + 1); // include trailing char (' ' or '\0')
+            memcpy(argv[argIdx], this->argBuf + lastArgPos, i + 1 - lastArgPos); // add one to account for i being an index
             argv[argIdx][i - lastArgPos + 1] = 0;                                // add null terminator
             argIdx++;
             lastArgPos = i + 1; // add 1 to skip space
         }
     }
 
+    // pass to callback
     bool success = f(this->cmdBuf, argc, argv);
 
+    // clean up memory
     for (int i = 0; i < argc; i++)
         delete[] argv[i];
     delete[] argv;
@@ -99,7 +123,68 @@ bool GSControl::processCmd(bool (*f)(char *, uint16_t, char **))
     return success;
 }
 
-uint16_t GSControl::encode(uint8_t *data, uint16_t sz)
+void GSControl::retrieveCmd(char **cmd, uint16_t *argc, char ***argv)
+{
+    // Notice: this code is prone to "off by one" errors, proceed with caution
+
+    // get number of args
+    *argc = 0;
+    int maxArgLen = 0;
+    int lastArgPos = 0;
+    int argsLen = strlen(this->argBuf);
+    for (int i = 0; i < argsLen; i++)
+    {
+        // new arg at space character or end of string
+        if (this->argBuf[i] == ' ' || i == argsLen - 1)
+        {
+            (*argc)++;
+            // need to account for i being an index
+            // for a string of length 2
+            // i will be 1 at the end
+            // so i+1 is the length
+            if (maxArgLen < i + 1 - lastArgPos)
+                maxArgLen = i + 1 - lastArgPos;
+            lastArgPos = i;
+        }
+    }
+
+    // allocate memory for argv
+    *argv = new char *[*argc];
+    for (int i = 0; i < *argc; i++)
+        (*argv)[i] = new char[maxArgLen + 1]; // add 1 for null terminator
+
+    // set argv
+    int argIdx = 0;
+    lastArgPos = 0;
+    for (int i = 0; i < argsLen; i++)
+    {
+        // new arg at space character or end of string
+        if (this->argBuf[i] == ' ' || i == argsLen - 1)
+        {
+            memcpy((*argv)[argIdx], this->argBuf + lastArgPos, i + 1 - lastArgPos); // add one to account for i being an index
+            (*argv)[argIdx][i + 1 - lastArgPos] = 0;                                // add null terminator
+            argIdx++;
+            lastArgPos = i + 1; // add 1 to skip space
+        }
+    }
+
+    // set cmd
+    *cmd = this->cmdBuf;
+}
+
+void GSControl::cleanup(uint16_t argc, char ***argv)
+{
+    // delete memory as if argv was made by retrieveCmd, checking for nullptr along the way
+    if (*argv != nullptr)
+    {
+        for (int i = 0; i < argc; i++)
+            if ((*argv)[i] != nullptr)
+                delete[] (*argv)[i];
+        delete[] (*argv);
+    }
+}
+
+int GSControl::encode(uint8_t *data, uint16_t sz)
 {
     int index = 0;
     int cmdLen = strlen(this->cmdBuf);
@@ -107,7 +192,7 @@ uint16_t GSControl::encode(uint8_t *data, uint16_t sz)
 
     // check that the message can fit the cmd
     if (sz < cmdLen)
-        return 0;
+        return GSControl::ERR_ID - 1;
 
     // copy cmd
     memcpy(data + index, this->cmdBuf, cmdLen);
@@ -117,7 +202,7 @@ uint16_t GSControl::encode(uint8_t *data, uint16_t sz)
 
     // check that the message can fit the args
     if (sz < index + argLen)
-        return 0;
+        return GSControl::ERR_ID - 2;
 
     // copy args
     memcpy(data + index, this->argBuf, argLen);
@@ -127,7 +212,7 @@ uint16_t GSControl::encode(uint8_t *data, uint16_t sz)
     return index;
 }
 
-uint16_t GSControl::decode(uint8_t *data, uint16_t sz)
+int GSControl::decode(uint8_t *data, uint16_t sz)
 {
     // assume typical command structure with spaces separating args
     for (uint16_t i = 0; i < sz; i++)
@@ -150,29 +235,46 @@ uint16_t GSControl::decode(uint8_t *data, uint16_t sz)
             this->valid = !((sz - cmdOffset) > int(sizeof(argBuf) - 1) || i > (sizeof(cmdBuf) - 1));
             break;
         }
+
+        if (i == (uint32_t)(sz - 1))
+        {
+            // command with no args
+            // copy command
+            // cut this portion of the string at the max size of cmdBuf if it's too long
+            uint32_t cmdOffset = i > (sizeof(this->cmdBuf) - 1) ? (sizeof(this->cmdBuf) - 1) : i;
+            memcpy(this->cmdBuf, data, cmdOffset);
+            this->cmdBuf[cmdOffset] = 0; // ensure null terminated
+            cmdOffset++;                 // skip space character
+
+            // copy args
+            this->argBuf[0] = 0; // ensure null terminated
+
+            this->valid = !((sz - cmdOffset) > (sizeof(argBuf) - 1) || i > (sizeof(cmdBuf) - 1));
+            break;
+        }
     }
 
     if (this->valid)
         // return total length added to buffers +1 for space in between
         return strlen(this->cmdBuf) + 1 + strlen(this->argBuf);
-    return 0;
+    return GSControl::ERR_ID - 3;
 }
 
-uint16_t GSControl::toJSON(char *json, uint16_t sz, int deviceId)
+int GSControl::toJSON(char *json, uint16_t sz, int deviceId)
 {
     uint16_t result = (uint16_t)snprintf(json, sz, "{\"type\":\"GSControl\",\"deviceId\":%d,\"data\":{\"valid\":%d,\"cmd\":\"%s\",\"args\":\"%s\"}}",
                                          deviceId, this->valid, this->cmdBuf, this->argBuf);
     if (result >= sz)
     {
         // output too large
-        return 0;
+        return GSControl::ERR_ID - 4;
     }
 
     // result should be the index of the \0
     return result;
 }
 
-uint16_t GSControl::fromJSON(char *json, uint16_t sz, int &deviceId)
+int GSControl::fromJSON(char *json, uint16_t sz, int &deviceId)
 {
     // strings to store data in
     char deviceIdStr[5] = {0};
@@ -180,13 +282,13 @@ uint16_t GSControl::fromJSON(char *json, uint16_t sz, int &deviceId)
 
     // extract each string
     if (!extractStr(json, sz, "\"deviceId\":", ',', deviceIdStr, sizeof(deviceIdStr)))
-        return 0;
+        return GSControl::ERR_ID - 5;
     if (!extractStr(json, sz, "\"valid\":", ',', validStr, sizeof(validStr)))
-        return 0;
+        return GSControl::ERR_ID - 6;
     if (!extractStr(json, sz, "\"cmd\":\"", '\"', this->cmdBuf, sizeof(this->cmdBuf)))
-        return 0;
+        return GSControl::ERR_ID - 7;
     if (!extractStr(json, sz, "\"args\":\"", '\"', this->argBuf, sizeof(this->argBuf)))
-        return 0;
+        return GSControl::ERR_ID - 8;
 
     // convert to correct data type
     deviceId = atoi(deviceIdStr);

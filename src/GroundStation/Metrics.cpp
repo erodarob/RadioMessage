@@ -56,11 +56,11 @@ void Metrics::update(uint32_t bits, uint64_t currentTime, short rssi)
     this->rssi = rssi;
 }
 
-uint16_t Metrics::encode(uint8_t *data, uint16_t sz)
+int Metrics::encode(uint8_t *data, uint16_t sz)
 {
     uint16_t pos = 0;
     if (sz < pos + Metrics::dataLen)
-        return 0; // error data too small for data
+        return Metrics::ERR_ID - 1; // error data too small for data
 
     // pretend rssi is an unsigned int to make sure we can work with it nicely
     // TODO: is this really necessary
@@ -77,11 +77,11 @@ uint16_t Metrics::encode(uint8_t *data, uint16_t sz)
     return pos;
 }
 
-uint16_t Metrics::decode(uint8_t *data, uint16_t sz)
+int Metrics::decode(uint8_t *data, uint16_t sz)
 {
     uint16_t pos = 0;
     if (sz < pos + Metrics::dataLen)
-        return 0; // error data too small for
+        return Metrics::ERR_ID - 2; // error data too small
 
     // pretend rssi is an unsigned int to make sure we can work with it nicely using +=
     uint16_t rssiUnsigned = 0;
@@ -101,7 +101,7 @@ uint16_t Metrics::decode(uint8_t *data, uint16_t sz)
     return pos;
 }
 
-uint16_t Metrics::toJSON(char *json, uint16_t sz, int deviceId)
+int Metrics::toJSON(char *json, uint16_t sz, int deviceId)
 {
     uint16_t result = (uint16_t)snprintf(json, sz, "{\"type\":\"Metrics\",\"deviceId\":%d,\"data\":{\"deviceId\":%d,\"bitrate\":%lu,\"rssi\":%d}}", deviceId, this->deviceId, this->bitrate, this->rssi);
 
@@ -111,10 +111,10 @@ uint16_t Metrics::toJSON(char *json, uint16_t sz, int deviceId)
         return result;
     }
     // output too large
-    return 0;
+    return Metrics::ERR_ID - 3;
 }
 
-uint16_t Metrics::fromJSON(char *json, uint16_t sz, int &deviceId)
+int Metrics::fromJSON(char *json, uint16_t sz, int &deviceId)
 {
     // strings to store data in
     char deviceIdStr1[5] = {0};
@@ -123,13 +123,13 @@ uint16_t Metrics::fromJSON(char *json, uint16_t sz, int &deviceId)
     char rssiStr[7] = {0};
     // extract each string
     if (!extractStr(json, sz, "\"deviceId\":", ',', deviceIdStr1, sizeof(deviceIdStr1)))
-        return 0;
+        return Metrics::ERR_ID - 4;
     if (!extractStr(json, sz, "\"data\":{\"deviceId\":", ',', deviceIdStr2, sizeof(deviceIdStr2)))
-        return 0;
+        return Metrics::ERR_ID - 5;
     if (!extractStr(json, sz, "\"bitrate\":", ',', bitrateStr, sizeof(bitrateStr)))
-        return 0;
+        return Metrics::ERR_ID - 6;
     if (!extractStr(json, sz, "\"rssi\":", ',', rssiStr, sizeof(rssiStr)))
-        return 0;
+        return Metrics::ERR_ID - 7;
 
     // convert to correct data type
     deviceId = atoi(deviceIdStr1);
@@ -137,5 +137,5 @@ uint16_t Metrics::fromJSON(char *json, uint16_t sz, int &deviceId)
     this->bitrate = atoi(bitrateStr);
     this->rssi = atoi(rssiStr);
 
-    return 1;
+    return sz;
 }

@@ -9,6 +9,8 @@
 
 #include "Message.h"
 
+#include "Message/GSMessage.h"
+
 #include "Data.h"
 // pull APRS classes
 #include "APRS/APRSData.h"
@@ -16,11 +18,12 @@
 #include "APRS/APRSCmd.h"
 #include "APRS/APRSText.h"
 // pull Astra classes
-// #include "Astra/AstraData.h"
+#include "Astra/AstraData.h"
 // pull GroundStation classes
 #include "GroundStation/GSControl.h"
-#include "GroundStation/GSData.h"
 #include "GroundStation/Metrics.h"
+// pull HITL classes
+#include "HITL/HITLData.h"
 // pull Raw classes
 #include "Raw/GenericData.h"
 #include "Raw/VideoData.h"

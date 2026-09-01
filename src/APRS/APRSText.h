@@ -12,6 +12,8 @@ public:
     static const int maxAddrLen = 9;
     // APRSText type
     static const uint8_t type = 0x05;
+    // type error ID
+    static const int ERR_ID = -type * 100;
     // the message buffer, 67 message length + 1 for \0
     char msg[maxMsgLen + 1] = {0};
     // the addressee buffer, 9 addressee length + 1 for \0
@@ -33,14 +35,14 @@ public:
     APRSText(APRSConfig config, char msg[67], char addressee[9]);
 
     // encode the data stored in the ```Data``` object and place the result in ```data```
-    uint16_t encode(uint8_t *data, uint16_t sz) override;
+    int encode(uint8_t *data, uint16_t sz) override;
     // decode the data stored in ```data``` and place it in the ```Data``` object
-    uint16_t decode(uint8_t *data, uint16_t sz) override;
+    int decode(uint8_t *data, uint16_t sz) override;
 
     // place the data in the ```Data``` object in the ```json``` string, ```sz``` is the max size of the string, ```deviceId``` can be set based on hardware
-    uint16_t toJSON(char *json, uint16_t sz, int deviceId) override;
+    int toJSON(char *json, uint16_t sz, int deviceId) override;
     // place the data in the ```json``` string in the ```Data``` object, ```sz``` is the max size of the string, ```deviceId``` can be set based on hardware
-    uint16_t fromJSON(char *json, uint16_t sz, int &deviceId) override;
+    int fromJSON(char *json, uint16_t sz, int &deviceId) override;
 };
 
 #endif

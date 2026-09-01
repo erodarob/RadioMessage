@@ -20,19 +20,22 @@ APRSText::APRSText(APRSConfig config, char msg[67], char addressee[9]) : APRSDat
     memcpy(this->addressee, addressee, this->addrLen);
 }
 
-uint16_t APRSText::encode(uint8_t *data, uint16_t sz)
+int APRSText::encode(uint8_t *data, uint16_t sz)
 {
     uint16_t pos = 0;
 
     // APRS header
-    this->encodeHeader(data, sz, pos);
+    int err = this->encodeHeader(data, sz, pos);
+    // check for errors
+    if (err < 0)
+        return APRSText::ERR_ID + err;
 
     // text message addressee:message
 
     if (sz < pos + this->addrLen + this->msgLen)
-        return 0; // error not enough space for text message
+        return APRSText::ERR_ID - 10; // error not enough space for text message
     if (this->config.type != TextMessage)
-        return 0; // error wrong APRS message type
+        return APRSText::ERR_ID - 11; // error wrong APRS message type
 
     data[pos++] = this->config.type;
 
@@ -55,15 +58,17 @@ uint16_t APRSText::encode(uint8_t *data, uint16_t sz)
     return pos;
 }
 
-uint16_t APRSText::decode(uint8_t *data, uint16_t sz)
+int APRSText::decode(uint8_t *data, uint16_t sz)
 {
     uint16_t pos = 0;
 
-    this->decodeHeader(data, sz, pos);
+    int err = this->decodeHeader(data, sz, pos);
+    if (err < 0)
+        return APRSText::ERR_ID + err;
 
     this->config.type = data[pos++];
     if (this->config.type != TextMessage)
-        return 0; // error wrong APRS message type
+        return APRSText::ERR_ID - 12; // error wrong APRS message type
 
     // get addressee
     this->addrLen = 0;
@@ -88,7 +93,7 @@ uint16_t APRSText::decode(uint8_t *data, uint16_t sz)
     return pos;
 }
 
-uint16_t APRSText::toJSON(char *json, uint16_t sz, int deviceId)
+int APRSText::toJSON(char *json, uint16_t sz, int deviceId)
 {
     uint16_t result = (uint16_t)snprintf(json, sz, "{\"type\":\"APRSText\",\"deviceId\":%d,\"data\":{\"message\":\"%s\",\"addressee\":\"%s\"}}", deviceId, this->msg, this->addressee);
 
@@ -98,26 +103,26 @@ uint16_t APRSText::toJSON(char *json, uint16_t sz, int deviceId)
         return result;
     }
     // output too large
-    return 0;
+    return APRSText::ERR_ID - 13;
 }
 
-uint16_t APRSText::fromJSON(char *json, uint16_t sz, int &deviceId)
+int APRSText::fromJSON(char *json, uint16_t sz, int &deviceId)
 {
     // strings to store data in
     char deviceIdStr[5] = {0};
 
     // extract each string
     if (!extractStr(json, sz, "\"deviceId\":", ',', deviceIdStr))
-        return 0;
+        return APRSText::ERR_ID - 14;
     if (!extractStr(json, sz, "\"message\":\"", '"', this->msg))
-        return 0;
+        return APRSText::ERR_ID - 15;
     if (!extractStr(json, sz, "\"addressee\":\"", '"', this->addressee))
-        return 0;
+        return APRSText::ERR_ID - 16;
 
     // convert to correct data type
     deviceId = atoi(deviceIdStr);
     this->msgLen = strlen(this->msg);
     this->addrLen = strlen(this->addressee);
 
-    return this->msgLen;
+    return sz;
 }

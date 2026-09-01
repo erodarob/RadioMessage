@@ -52,6 +52,13 @@ enum APRSMessageType : char
 class APRSData : public Data
 {
 public:
+    // Note: Since APRSData is an abstract class, it doesn't get it's own ERR_ID
+    // Instead, everything that inherits from APRSData should offset its own errors
+    // by 10 (i.e. starting at -X10) to allow errors 1-9 to be used by APRSData.
+    // APRSData function that return error codes will return the the local error
+    // code, which should be added to the child's ERR_ID to get the global error code.
+    // static const int ERR_ID = 0;
+
     // the configuration for this message
     // Note: modified when message is decoded
     APRSConfig config;
@@ -69,9 +76,9 @@ public:
     APRSData(APRSConfig cfg) : config(cfg) {};
 
     // encode the data stored in the ```Data``` object and place the result in ```data```
-    uint16_t encodeHeader(uint8_t *data, uint16_t sz, uint16_t &pos);
+    int encodeHeader(uint8_t *data, uint16_t sz, uint16_t &pos);
     // decode the data stored in ```data``` and place it in the ```Data``` object
-    uint16_t decodeHeader(uint8_t *data, uint16_t sz, uint16_t &pos);
+    int decodeHeader(uint8_t *data, uint16_t sz, uint16_t &pos);
 
     // convert a number to a base 91 number represented by ascii characters
     // - str : the string to add the number to, must be long enough to hold ```precision``` more characters

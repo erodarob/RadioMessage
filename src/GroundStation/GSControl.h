@@ -1,10 +1,10 @@
 #ifndef GSCONTROL_H
 #define GSCONTROL_H
 
-// TODO deconflict type numbers
-
 #include "../Data.h"
 #include "../Types/PackedNum.h"
+
+typedef bool (*GSControl_CB)(char *, uint16_t, char **);
 
 class GSControl : public Data
 {
@@ -15,11 +15,13 @@ public:
     static const uint16_t maxArgSize = 200;
     // GSControl type
     static const uint8_t type = 0x01;
+    // type error ID
+    static const int ERR_ID = -type * 100;
 
     // buffer to store message command
-    char cmdBuf[maxCmdSize] = {0};
+    char cmdBuf[maxCmdSize + 1] = {0};
     // buffer to store message args
-    char argBuf[maxArgSize] = {0};
+    char argBuf[maxArgSize + 1] = {0};
 
     // whether the command was successfully fit into the internal variables
     bool valid = false;
@@ -28,8 +30,8 @@ public:
     GSControl() {};
 
     // GSControl constructor
-    // - cmd : the command and arguments for the message, must be null terminated
-    GSControl(const char *cmd);
+    // - data : the command and arguments for the message, must be null terminated
+    GSControl(const char *data);
 
     // GSControl constructor
     // - cmd : the command for the message, must be null terminated
@@ -42,18 +44,25 @@ public:
     // - argv : the values of the arguments for the message, must be null terminated
     GSControl(const char *cmd, uint16_t argc, const char **argv);
 
-    // process the command contained within the GSControl object using the callback function f
-    bool processCmd(bool (*f)(char *, uint16_t, char **));
+    void setCmd(const char *cmd, const char *args);
+
+    // process the command contained within the GSControl object using the callback function ```f```
+    bool processCmd(GSControl_CB f);
+    // place the contents of the command in the supplied ```cmd```, ```argc```, and ```argv``` variables
+    // should be called as ```retrieveCmd(&cmd, &argc, &argv)```, where ```cmd```=char*, ```argc```=uint16_t, ```argv```=char**
+    void retrieveCmd(char **cmd, uint16_t *argc, char ***argv);
+    // clean up memory used by ```argv```
+    void cleanup(uint16_t argc, char ***argv);
 
     // encode the data stored in the ```Data``` object and place the result in ```data```
-    uint16_t encode(uint8_t *data, uint16_t sz) override;
+    int encode(uint8_t *data, uint16_t sz) override;
     // decode the data stored in ```data``` and place it in the ```Data``` object
-    uint16_t decode(uint8_t *data, uint16_t sz) override;
+    int decode(uint8_t *data, uint16_t sz) override;
 
     // place the data in the ```Data``` object in the ```json``` string, ```sz``` is the max size of the string, ```deviceId``` can be set based on hardware
-    uint16_t toJSON(char *json, uint16_t sz, int deviceId) override;
+    int toJSON(char *json, uint16_t sz, int deviceId) override;
     // place the data in the ```json``` string in the ```Data``` object, ```sz``` is the max size of the string, ```deviceId``` can be set based on hardware
-    uint16_t fromJSON(char *json, uint16_t sz, int &deviceId) override;
+    int fromJSON(char *json, uint16_t sz, int &deviceId) override;
 };
 
 #endif

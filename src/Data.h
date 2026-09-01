@@ -18,17 +18,18 @@ class Data
 {
 public:
     static const uint8_t type;
+    static const int ERR_ID;
 
     virtual ~Data() {}; // Virtual descructor. Very important
     // encode the data stored in the ```Data``` object and place the result in ```data```, ```sz``` is the max size of ```data```
-    virtual uint16_t encode(uint8_t *data, uint16_t sz) = 0;
+    virtual int encode(uint8_t *data, uint16_t sz) = 0;
     // decode the data stored in ```data``` and place it in the ```Data``` object, ```sz``` is the number of bytes from ```data``` to decode
-    virtual uint16_t decode(uint8_t *data, uint16_t sz) = 0;
+    virtual int decode(uint8_t *data, uint16_t sz) = 0;
 
     // place the data in the ```Data``` object in the ```json``` string, ```sz``` is the max size of the string, ```deviceId``` can be set based on hardware
-    virtual uint16_t toJSON(char *json, uint16_t sz, int deviceId) = 0;
+    virtual int toJSON(char *json, uint16_t sz, int deviceId) = 0;
     // place the data in the ```json``` string in the ```Data``` object, ```sz``` is the max size of the string, ```deviceId``` can be set based on hardware
-    virtual uint16_t fromJSON(char *json, uint16_t sz, int &deviceId) = 0;
+    virtual int fromJSON(char *json, uint16_t sz, int &deviceId) = 0;
 
     // extract a substing from a string
     // - src: the string to take the substring from
@@ -37,7 +38,7 @@ public:
     // - stopCond: the char to look for to stop the substring
     // - dest: the string to place the substring into
     // - szDest: the size of the ```dest``` string
-    bool extractStr(char *src, int szSource, const char *lookFor, char stopCond, char *dest, int szDest = -1)
+    static bool extractStr(char *src, int szSource, const char *lookFor, char stopCond, char *dest, int szDest = -1)
     {
         // find to position of the start of the lookFor string
         char *strPos = strstr(src, lookFor);
