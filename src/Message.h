@@ -16,9 +16,15 @@ using namespace std;
 class Message
 {
 public:
-    static const int ERR_ID = -0;
+#ifndef MSG_SIZE_OVRD
     // maximum message size
     static const uint16_t maxSize = 10e3;
+#else
+    // maximum message size
+    static const uint16_t maxSize = MSG_SIZE_OVRD;
+#endif
+
+    static const int ERR_ID = -0;
 
     // the buffer that stores the message data
     // acutal size is maxSize+1, but the last byte should always be 0 to prevent issues with C string functions
@@ -77,13 +83,13 @@ public:
     char *errors();
 
 #ifdef ARDUINO
-    // prints the contents of the message over ```Serial```
+    // prints the contents of the message over ```Serial```, \n terminated
     // Note: video not supported
-    Message *print(Stream &Serial);
+    Message *print(Stream &s);
 
     // writes the contents of the message over ```Serial```
     // Note: video supported
-    Message *write(Stream &Serial);
+    Message *write(Stream &s);
 #elif defined(_WIN32) || defined(_WIN64) || defined(__unix__) || defined(__APPLE__)
     // prints the contents of the message to stdout
     // Note: video not supported

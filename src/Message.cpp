@@ -270,15 +270,15 @@ void Message::error(int errVal)
 
 #ifdef ARDUINO
 
-Message *Message::print(Stream &Serial)
+Message *Message::print(Stream &s)
 {
-    Serial.println((char *)this->buf);
+    s.println((char *)this->buf);
     return this;
 }
 
-Message *Message::write(Stream &Serial)
+Message *Message::write(Stream &s)
 {
-    Serial.write(this->buf, this->size);
+    s.write(this->buf, this->size);
     return this;
 }
 
