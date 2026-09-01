@@ -18,10 +18,12 @@
 #include "APRS/APRSCmd.h"
 #include "APRS/APRSText.h"
 // pull Astra classes
-// #include "Astra/AstraData.h"
+#include "Astra/AstraData.h"
 // pull GroundStation classes
 #include "GroundStation/GSControl.h"
 #include "GroundStation/Metrics.h"
+// pull HITL classes
+#include "HITL/HITLData.h"
 // pull Raw classes
 #include "Raw/GenericData.h"
 #include "Raw/VideoData.h"

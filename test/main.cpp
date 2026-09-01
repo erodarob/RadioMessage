@@ -8,6 +8,10 @@
 // callback function declaration for later
 bool callback(char *cmd, uint16_t argc, char **argv);
 
+// TODO: actual tests for HITLData and AstraData, don't use these
+// HITLData testHITL;
+// AstraData testAstra;
+
 int main(int argc, char *argv[])
 {
     uint8_t e[] = {1, 3, 3, 1, 4, 12};

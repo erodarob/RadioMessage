@@ -31,13 +31,13 @@ AstraData::AstraData(float _timestamp_s,
 int AstraData::encode(uint8_t *data, uint16_t sz)
 {
     if (data == nullptr)
-        return 0;
+        return AstraData::ERR_ID - 1;
 
     uint16_t pos = 0;
     const uint16_t totalSize = static_cast<uint16_t>(PAYLOAD_SIZE);
 
     if (sz < totalSize)
-        return 0; // provided buffer too small
+        return AstraData::ERR_ID - 2; // provided buffer too small
 
     memcpy(&data[pos], &timestamp_s, sizeof(timestamp_s));
     pos += sizeof(timestamp_s);
@@ -77,7 +77,7 @@ int AstraData::encode(uint8_t *data, uint16_t sz)
     pos += sizeof(qz);
 
     if (pos != totalSize)
-        return 0; // encoding error
+        return AstraData::ERR_ID - 3; // encoding error
 
     return pos;
 }
@@ -85,13 +85,13 @@ int AstraData::encode(uint8_t *data, uint16_t sz)
 int AstraData::decode(uint8_t *data, uint16_t sz)
 {
     if (data == nullptr)
-        return 0;
+        return AstraData::ERR_ID - 4;
 
     uint16_t pos = 0;
     const uint16_t totalSize = static_cast<uint16_t>(PAYLOAD_SIZE);
 
     if (sz < totalSize)
-        return 0; // provided buffer too small
+        return AstraData::ERR_ID - 5; // provided buffer too small
 
     memcpy(&timestamp_s, &data[pos], sizeof(timestamp_s));
     pos += sizeof(timestamp_s);
@@ -131,7 +131,7 @@ int AstraData::decode(uint8_t *data, uint16_t sz)
     pos += sizeof(qz);
 
     if (pos != totalSize)
-        return 0; // decoding error
+        return AstraData::ERR_ID - 6; // decoding error
 
     return pos;
 }
@@ -139,7 +139,7 @@ int AstraData::decode(uint8_t *data, uint16_t sz)
 int AstraData::toJSON(char *json, uint16_t sz, int deviceId)
 {
     if (json == nullptr)
-        return 0;
+        return AstraData::ERR_ID - 7;
 
     uint16_t result = (uint16_t)snprintf(
         json,
@@ -162,16 +162,16 @@ int AstraData::toJSON(char *json, uint16_t sz, int deviceId)
         ax_e, ay_e, az_e,
         qw, qx, qy, qz);
 
-    if (result < sz)
-        return result;
+    if (result > sz)
+        return AstraData::ERR_ID - 8; // output too large
 
-    return 0; // output too large
+    return result;
 }
 
 int AstraData::fromJSON(char *json, uint16_t sz, int &deviceId)
 {
     if (json == nullptr)
-        return 0;
+        return AstraData::ERR_ID - 9;
 
     // ---- buffers for extracted strings ----
     char deviceIdStr[8] = {0};
@@ -196,42 +196,42 @@ int AstraData::fromJSON(char *json, uint16_t sz, int &deviceId)
 
     // ---- extract fields ----
     if (!extractStr(json, sz, "\"deviceId\":", ',', deviceIdStr, sizeof(deviceIdStr)))
-        return 0;
+        return AstraData::ERR_ID - 10;
 
     if (!extractStr(json, sz, "\"t\":", ',', tStr, sizeof(tStr)))
-        return 0;
+        return AstraData::ERR_ID - 11;
 
     if (!extractStr(json, sz, "\"px\":", ',', pxStr, sizeof(pxStr)))
-        return 0;
+        return AstraData::ERR_ID - 12;
     if (!extractStr(json, sz, "\"py\":", ',', pyStr, sizeof(pyStr)))
-        return 0;
+        return AstraData::ERR_ID - 13;
     if (!extractStr(json, sz, "\"pz\":", ',', pzStr, sizeof(pzStr)))
-        return 0;
+        return AstraData::ERR_ID - 14;
 
     if (!extractStr(json, sz, "\"vx\":", ',', vxStr, sizeof(vxStr)))
-        return 0;
+        return AstraData::ERR_ID - 15;
     if (!extractStr(json, sz, "\"vy\":", ',', vyStr, sizeof(vyStr)))
-        return 0;
+        return AstraData::ERR_ID - 16;
     if (!extractStr(json, sz, "\"vz\":", ',', vzStr, sizeof(vzStr)))
-        return 0;
+        return AstraData::ERR_ID - 17;
 
     if (!extractStr(json, sz, "\"ax_e\":", ',', axStr, sizeof(axStr)))
-        return 0;
+        return AstraData::ERR_ID - 18;
     if (!extractStr(json, sz, "\"ay_e\":", ',', ayStr, sizeof(ayStr)))
-        return 0;
+        return AstraData::ERR_ID - 19;
     if (!extractStr(json, sz, "\"az_e\":", ',', azStr, sizeof(azStr)))
-        return 0;
+        return AstraData::ERR_ID - 20;
 
     if (!extractStr(json, sz, "\"qw\":", ',', qwStr, sizeof(qwStr)))
-        return 0;
+        return AstraData::ERR_ID - 21;
     if (!extractStr(json, sz, "\"qx\":", ',', qxStr, sizeof(qxStr)))
-        return 0;
+        return AstraData::ERR_ID - 22;
     if (!extractStr(json, sz, "\"qy\":", ',', qyStr, sizeof(qyStr)))
-        return 0;
+        return AstraData::ERR_ID - 23;
 
     // last field ends with '}'
     if (!extractStr(json, sz, "\"qz\":", '}', qzStr, sizeof(qzStr)))
-        return 0;
+        return AstraData::ERR_ID - 24;
 
     // ---- convert to numeric types ----
     deviceId = atoi(deviceIdStr);
@@ -255,6 +255,5 @@ int AstraData::fromJSON(char *json, uint16_t sz, int &deviceId)
     qy = (float)atof(qyStr);
     qz = (float)atof(qzStr);
 
-    // Keep your convention: return 1 on success (like your HITLData::fromJSON)
     return 1;
 }

@@ -1,4 +1,4 @@
-// Created by Divyansh Srivastava on 1/11/2026
+
 // This is the implementation file for the HITLData class defined within HITLData.h
 // This class will be for HITLData, used for polymorphic data transmission through RadioMessage
 
@@ -34,37 +34,32 @@ HITLData::HITLData(float _timestamp_s,
 // little-endian vs big-endian issues with binary data across different hardware,
 // and also because JSON is human readable and easier to debug
 
-uint16_t HITLData::encode(uint8_t *data, uint16_t sz)
+int HITLData::encode(uint8_t *data, uint16_t sz)
 {
     if (data == nullptr)
-        return 0;
+        return HITLData::ERR_ID - 1;
     if (sz < 2)
-        return 0;
+        return HITLData::ERR_ID - 2;
 
     // Write JSON into the outgoing buffer as text
     int deviceId = 0; // need to fix
-    uint16_t n = toJSON(reinterpret_cast<char *>(data), (uint16_t)(sz), deviceId);
-    if (n == 0)
-        return 0;
-
-    return n; // number of bytes of JSON (not counting '\0')
+    return toJSON(reinterpret_cast<char *>(data), (uint16_t)(sz), deviceId);
 }
 
 // decode reads string data instead of binary data becuase of worries of
 // little-endian vs big-endian issues with binary data across different hardware,
 // and also because JSON is human readable and easier to debug
-uint16_t HITLData::decode(uint8_t *data, uint16_t sz)
+int HITLData::decode(uint8_t *data, uint16_t sz)
 {
     if (data == nullptr)
-        return 0;
+        return HITLData::ERR_ID - 3;
 
     int deviceId = 0; // need to fix
     // Interpret incoming bytes as a JSON string and parse it
-    uint16_t ok = fromJSON(reinterpret_cast<char *>(data), sz, deviceId);
-    return ok ? 1 : 0;
+    return fromJSON(reinterpret_cast<char *>(data), sz, deviceId);
 }
 
-uint16_t HITLData::toJSON(char *json, uint16_t sz, int deviceId)
+int HITLData::toJSON(char *json, uint16_t sz, int deviceId)
 {
 
     uint16_t result = (uint16_t)snprintf(
@@ -100,16 +95,15 @@ uint16_t HITLData::toJSON(char *json, uint16_t sz, int deviceId)
         fixqual,
         heading_deg);
 
-    if (result < sz)
+    if (result > sz)
     {
-        // ran properly
-        return result;
+        return HITLData::ERR_ID - 4; // output too large
     }
-    // output too large
-    return 0;
+    // ran properly
+    return result;
 }
 
-uint16_t HITLData::fromJSON(char *json, uint16_t sz, int &deviceId)
+int HITLData::fromJSON(char *json, uint16_t sz, int &deviceId)
 {
     // ---- buffers for extracted strings ----
     char deviceIdStr[8] = {0};
@@ -139,51 +133,51 @@ uint16_t HITLData::fromJSON(char *json, uint16_t sz, int &deviceId)
 
     // ---- extract fields ----
     if (!extractStr(json, sz, "\"deviceId\":", ',', deviceIdStr, sizeof(deviceIdStr)))
-        return 0;
+        return HITLData::ERR_ID - 5;
 
     if (!extractStr(json, sz, "\"t\":", ',', tStr, sizeof(tStr)))
-        return 0;
+        return HITLData::ERR_ID - 6;
 
     if (!extractStr(json, sz, "\"ax\":", ',', axStr, sizeof(axStr)))
-        return 0;
+        return HITLData::ERR_ID - 7;
     if (!extractStr(json, sz, "\"ay\":", ',', ayStr, sizeof(ayStr)))
-        return 0;
+        return HITLData::ERR_ID - 8;
     if (!extractStr(json, sz, "\"az\":", ',', azStr, sizeof(azStr)))
-        return 0;
+        return HITLData::ERR_ID - 9;
 
     if (!extractStr(json, sz, "\"gx\":", ',', gxStr, sizeof(gxStr)))
-        return 0;
+        return HITLData::ERR_ID - 10;
     if (!extractStr(json, sz, "\"gy\":", ',', gyStr, sizeof(gyStr)))
-        return 0;
+        return HITLData::ERR_ID - 11;
     if (!extractStr(json, sz, "\"gz\":", ',', gzStr, sizeof(gzStr)))
-        return 0;
+        return HITLData::ERR_ID - 12;
 
     if (!extractStr(json, sz, "\"mx\":", ',', mxStr, sizeof(mxStr)))
-        return 0;
+        return HITLData::ERR_ID - 13;
     if (!extractStr(json, sz, "\"my\":", ',', myStr, sizeof(myStr)))
-        return 0;
+        return HITLData::ERR_ID - 14;
     if (!extractStr(json, sz, "\"mz\":", ',', mzStr, sizeof(mzStr)))
-        return 0;
+        return HITLData::ERR_ID - 15;
 
     if (!extractStr(json, sz, "\"pressure_hPa\":", ',', pressureStr, sizeof(pressureStr)))
-        return 0;
+        return HITLData::ERR_ID - 16;
     if (!extractStr(json, sz, "\"temp_C\":", ',', tempStr, sizeof(tempStr)))
-        return 0;
+        return HITLData::ERR_ID - 17;
 
     if (!extractStr(json, sz, "\"lat\":", ',', latStr, sizeof(latStr)))
-        return 0;
+        return HITLData::ERR_ID - 18;
     if (!extractStr(json, sz, "\"lon\":", ',', lonStr, sizeof(lonStr)))
-        return 0;
+        return HITLData::ERR_ID - 19;
 
     if (!extractStr(json, sz, "\"alt_m\":", ',', altStr, sizeof(altStr)))
-        return 0;
+        return HITLData::ERR_ID - 20;
 
     if (!extractStr(json, sz, "\"fixqual\":", ',', fixqualStr, sizeof(fixqualStr)))
-        return 0;
+        return HITLData::ERR_ID - 21;
 
     // last field ends with '}'
     if (!extractStr(json, sz, "\"heading_deg\":", '}', headingStr, sizeof(headingStr)))
-        return 0;
+        return HITLData::ERR_ID - 22;
 
     // ---- convert to numeric types ----
     deviceId = atoi(deviceIdStr);
