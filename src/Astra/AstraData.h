@@ -1,7 +1,8 @@
-// Created by Divyansh Srivastava on 1/13/2026
+
 // This is the header file for the ASTRAData class defined within ASTRAData.cpp
 // This class is tied wiht the entire HITL system and will be used to hold filtered sensor outputs after
 // the state algorithm has run
+
 #ifndef ASTRA_DATA_H
 #define ASTRA_DATA_H
 

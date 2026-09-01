@@ -1,4 +1,4 @@
-// Created by Divyansh Srivastava on 1/13/2026
+
 // This is the implementation file for the ASTRAData class defined within ASTRAData.h
 // This class will be used ot carry filtered output post state estimation for HITL purposes
 // This class holds FILTERED / FUSED outputs (State = Mahony attitude + Linear KF translation)
@@ -6,7 +6,7 @@
 
 #include "AstraData.h"
 
-ASTRAData::ASTRAData()
+AstraData::AstraData()
     : timestamp_s(0.0f),
       px(0.0f), py(0.0f), pz(0.0f),
       vx(0.0f), vy(0.0f), vz(0.0f),
@@ -15,7 +15,7 @@ ASTRAData::ASTRAData()
 {
 } // default constructor
 
-ASTRAData::ASTRAData(float _timestamp_s,
+AstraData::AstraData(float _timestamp_s,
                      float _px, float _py, float _pz,
                      float _vx, float _vy, float _vz,
                      float _ax_e, float _ay_e, float _az_e,
@@ -28,7 +28,7 @@ ASTRAData::ASTRAData(float _timestamp_s,
 {
 } // parameterized constructor
 
-uint16_t ASTRAData::encode(uint8_t *data, uint16_t sz)
+int AstraData::encode(uint8_t *data, uint16_t sz)
 {
     if (data == nullptr)
         return 0;
@@ -82,7 +82,7 @@ uint16_t ASTRAData::encode(uint8_t *data, uint16_t sz)
     return pos;
 }
 
-uint16_t ASTRAData::decode(uint8_t *data, uint16_t sz)
+int AstraData::decode(uint8_t *data, uint16_t sz)
 {
     if (data == nullptr)
         return 0;
@@ -136,7 +136,7 @@ uint16_t ASTRAData::decode(uint8_t *data, uint16_t sz)
     return pos;
 }
 
-uint16_t ASTRAData::toJSON(char *json, uint16_t sz, int deviceId)
+int AstraData::toJSON(char *json, uint16_t sz, int deviceId)
 {
     if (json == nullptr)
         return 0;
@@ -168,7 +168,7 @@ uint16_t ASTRAData::toJSON(char *json, uint16_t sz, int deviceId)
     return 0; // output too large
 }
 
-uint16_t ASTRAData::fromJSON(char *json, uint16_t sz, int &deviceId)
+int AstraData::fromJSON(char *json, uint16_t sz, int &deviceId)
 {
     if (json == nullptr)
         return 0;
