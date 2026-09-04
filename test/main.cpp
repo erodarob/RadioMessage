@@ -14,6 +14,11 @@ bool callback(char *cmd, uint16_t argc, char **argv);
 
 int main(int argc, char *argv[])
 {
+    GSWrapper gswr;
+    printf("prepend: %d, append: %d\n", gswr.prependLen(), gswr.appendLen());
+    Wrapper *wr = &gswr;
+    printf("prepend: %d, append: %d\n", wr->prependLen(), wr->appendLen());
+
     uint8_t e[] = {1, 3, 3, 1, 4, 12};
     PackedNum test(e, sizeof(e));
     uint64_t v[] = {0, 3, 2, 1, 15, 3000};

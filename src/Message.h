@@ -12,6 +12,7 @@ using namespace std;
 #endif
 
 #include "Data.h"
+#include "Wrapper.h"
 
 class Message
 {
@@ -33,7 +34,7 @@ public:
     uint16_t size = 0;
 
     // Message default constructor
-    Message() {};
+    Message();
 
     // Message constructor
     // - rawData : an encoded message
@@ -43,6 +44,8 @@ public:
     // Message constructor
     // - data : a ```Data``` object that will be encoded into the Message buffer
     Message(Data *data);
+
+    ~Message();
 
     // use return type Message* so we can stack operators e.g., ```Message()->fill()->encode()```
 
@@ -82,6 +85,9 @@ public:
     bool hasError();
     char *errors();
 
+    // wrappers
+    Message *reg(Wrapper *wr);
+
 #ifdef ARDUINO
     // prints the contents of the message over ```Serial```, \n terminated
     // Note: video not supported
@@ -105,6 +111,12 @@ protected:
     char errStr[32] = {0};
 
     void error(int err);
+
+private:
+    Wrapper **wrs;
+    uint16_t numWrappers = 0;
+    uint16_t knownPrependLen = 0;
+    uint16_t knownAppendLen = 0;
 };
 
 #endif

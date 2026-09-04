@@ -2,6 +2,11 @@
 
 // constructors
 
+Message::Message()
+{
+    this->wrs = new Wrapper *[0];
+}
+
 Message::Message(uint8_t *data, uint16_t sz)
 {
     // make sure we don't copy more than this->maxSize bytes
@@ -11,6 +16,8 @@ Message::Message(uint8_t *data, uint16_t sz)
         this->size = sz;
 
     memcpy(this->buf, data, this->size);
+
+    this->wrs = new Wrapper *[0];
 }
 
 Message::Message(Data *data)
@@ -24,15 +31,77 @@ Message::Message(Data *data)
     }
     else
         this->error(status);
+
+    this->wrs = new Wrapper *[0];
+}
+
+Message::~Message()
+{
+    if (this->wrs != nullptr)
+    {
+        delete[] this->wrs;
+    }
 }
 
 Message *Message::encode(Data *data)
 {
     // encode the message
-    int status = data->encode(this->buf, this->maxSize);
+    int status = data->encode(this->buf + this->knownPrependLen, this->maxSize - this->knownPrependLen - this->knownAppendLen);
     if (status > 0)
     {
         this->size = status;
+        this->buf[this->size] = 0;
+
+        // handle wrappers
+        uint16_t finalPrependLen = 0;
+        uint16_t finalAppendLen = 0;
+        for (uint16_t i = 0; i < numWrappers; i++)
+        {
+            uint16_t prependLen = this->wrs[i]->prependLen(this->size + finalPrependLen + finalAppendLen);
+            uint16_t appendLen = this->wrs[i]->appendLen(this->size + finalPrependLen + finalAppendLen);
+            finalPrependLen += prependLen;
+            finalAppendLen += appendLen;
+        }
+
+        // TODO: remove after testing
+        if (finalPrependLen < this->knownPrependLen || finalAppendLen < this->knownAppendLen)
+        {
+            // this shouldn't happen
+            return this;
+        }
+
+        if (this->size > this->maxSize - finalPrependLen - finalAppendLen)
+        {
+            // error message with wrappers won't fit
+            return this;
+        }
+
+        // shift right if there is space and the size of the prepend region grew after message size was known
+        int moveBytesRight = finalPrependLen - this->knownPrependLen;
+        if (moveBytesRight > 0 && this->size > this->maxSize - finalPrependLen - finalAppendLen)
+        {
+            // need to start from right or we'll overwrite data
+            for (int i = this->size - finalAppendLen - moveBytesRight - 1; i >= 0; i--)
+            {
+                this->buf[i + moveBytesRight] = this->buf[i];
+            }
+        }
+
+        // we know there is enough space at this point
+        uint16_t cumPrependLen = 0;
+        uint16_t cumAppendLen = 0;
+        for (uint16_t i = 0; i < numWrappers; i++)
+        {
+            // prepend pointer is at the start of the prepended data
+            // append pointer is at the end of the appended data
+            uint16_t prependLen = this->wrs[i]->prependLen(this->size + cumPrependLen + cumAppendLen);
+            uint16_t appendLen = this->wrs[i]->appendLen(this->size + cumPrependLen + cumAppendLen);
+            this->wrs[i]->wrap(this->buf + finalPrependLen - cumPrependLen - prependLen, this->size + cumAppendLen + appendLen);
+            cumPrependLen += prependLen;
+            cumAppendLen += appendLen;
+        }
+
+        this->size += finalPrependLen + finalAppendLen;
         this->buf[this->size] = 0;
     }
     else
@@ -42,7 +111,20 @@ Message *Message::encode(Data *data)
 
 Message *Message::decode(Data *data)
 {
-    int status = data->decode(this->buf, this->size);
+    uint16_t cumPrependLen = 0;
+    uint16_t cumAppendLen = 0;
+    // going backwards
+    for (uint16_t i = numWrappers - 1; i >= 0; i--)
+    {
+        uint16_t prependLen = 0;
+        uint16_t appendLen = 0;
+        // prepend pointer is at the start of the prepended data
+        // append pointer is at the end of the appended data
+        this->wrs[i]->unwrap(this->buf + cumPrependLen, this->size - cumAppendLen, prependLen, appendLen);
+        cumPrependLen += prependLen;
+        cumAppendLen += appendLen;
+    }
+    int status = data->decode(this->buf + cumPrependLen, this->size - cumPrependLen - cumAppendLen);
     if (status <= 0)
         this->error(status);
     return this;
@@ -266,6 +348,33 @@ void Message::error(int errVal)
         int len = strlen(errStr);
         snprintf(errStr + len - 1, sizeof(errStr) - len, ",%d\n", errVal);
     }
+}
+
+Message *Message::reg(Wrapper *wr)
+{
+    // allocate memory in the array for the new wrapper
+    Wrapper **newWrs = new Wrapper *[numWrappers + 1];
+
+    if (this->wrs != nullptr)
+    {
+        for (uint16_t i = 0; i < numWrappers; i++)
+        {
+            newWrs[i] = this->wrs[i];
+        }
+
+        delete[] this->wrs;
+    }
+    newWrs[numWrappers++] = wr;
+    this->wrs = newWrs;
+
+    // add prepend and append lengths only if they are > 0 (those that are -1 will be updated after the message is generated)
+    if (wr->prependLen() > 0)
+        this->knownPrependLen += wr->prependLen();
+
+    if (wr->appendLen() > 0)
+        this->knownAppendLen += wr->appendLen();
+
+    return this;
 }
 
 #ifdef ARDUINO

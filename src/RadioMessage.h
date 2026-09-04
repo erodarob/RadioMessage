@@ -30,4 +30,8 @@
 // pull Types
 #include "Types/PackedNum.h"
 
+#include "Wrapper.h"
+// pull Wrappers
+#include "Wrapper/GSWrapper.h"
+
 #endif

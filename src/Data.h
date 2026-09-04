@@ -20,7 +20,7 @@ public:
     static const uint8_t type;
     static const int ERR_ID;
 
-    virtual ~Data() {}; // Virtual descructor. Very important
+    virtual ~Data() {}; // Virtual destructor. Very important
     // encode the data stored in the ```Data``` object and place the result in ```data```, ```sz``` is the max size of ```data```
     virtual int encode(uint8_t *data, uint16_t sz) = 0;
     // decode the data stored in ```data``` and place it in the ```Data``` object, ```sz``` is the number of bytes from ```data``` to decode

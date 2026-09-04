@@ -13,5 +13,6 @@ add_library(Message STATIC ${LIB_DIR}/Message.cpp
     ${LIB_DIR}/HITL/HITLData.cpp 
     ${LIB_DIR}/Raw/GenericData.cpp 
     ${LIB_DIR}/Raw/VideoData.cpp 
-    ${LIB_DIR}/Types/PackedNum.cpp)
+    ${LIB_DIR}/Types/PackedNum.cpp
+    ${LIB_DIR}/Wrapper/GSWrapper.cpp)
 target_include_directories(Message PUBLIC ${LIB_DIR})
