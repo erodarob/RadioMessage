@@ -56,6 +56,9 @@ public:
     // clears all stored data
     Message *clear();
 
+    Message *wrap();
+    Message *unwrap();
+
     // append the contents of ```data``` to the Message buffer, where ```data``` contains ```sz``` bytes, fails if final message size will be too large
     // Note: does not add message separator, use ```encode()``` to combine multiple messages
     Message *append(uint8_t *data, uint16_t sz);
@@ -117,6 +120,8 @@ private:
     uint16_t numWrappers = 0;
     uint16_t knownPrependLen = 0;
     uint16_t knownAppendLen = 0;
+    uint16_t prependLen = 0;
+    uint16_t appendLen = 0;
 };
 
 #endif

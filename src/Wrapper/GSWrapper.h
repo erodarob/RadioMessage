@@ -20,7 +20,7 @@ public:
     // size of the header
     static const uint8_t headerLen = 3;
     // the PackedNum encoding used by the header
-    static constexpr uint8_t headerEncoding[] = {4, 4, 8, 8};
+    static constexpr uint8_t headerEncoding[] = {4, 4, 16};
     // size of header encoding
     static const uint8_t headerEncodingLength = sizeof(headerEncoding);
 
@@ -36,12 +36,12 @@ public:
     GSWrapper() {};
 
     // set the metadata for encoding from ```streamType``` and ```streamId```
-    void setMetadata(uint8_t streamType, uint8_t streamId) {};
+    void setMetadata(uint8_t streamType, uint8_t streamId);
     // retrieve metadata and place into ```streamType``` and ```streamId```
-    void getMetadata(uint8_t &streamType, uint8_t &streamId) {};
+    void getMetadata(uint8_t &streamType, uint8_t &streamId);
 
-    int wrap(uint8_t *data, uint16_t len) override {};
-    int unwrap(uint8_t *data, uint16_t len, uint16_t &prependLen, uint16_t &appendLen) override {};
+    int wrap(uint8_t *prependPos, uint8_t *appendPos) override;
+    int unwrap(uint8_t *prependPos, uint8_t *appendPos, uint16_t &prependLen, uint16_t &appendLen) override;
 
     int prependLen(int mLen = -1) override { return 3; };
     int appendLen(int mLen = -1) override { return 0; };

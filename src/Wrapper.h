@@ -17,8 +17,8 @@ public:
     bool enabled = false;
     virtual ~Wrapper() {}; // Virtual destructor. Very important
 
-    virtual int wrap(uint8_t *data, uint16_t len) = 0;
-    virtual int unwrap(uint8_t *data, uint16_t len, uint16_t &prependLen, uint16_t &appendLen) = 0;
+    virtual int wrap(uint8_t *prependPos, uint8_t *appendPos) = 0;
+    virtual int unwrap(uint8_t *prependPos, uint8_t *appendPos, uint16_t &prependLen, uint16_t &appendLen) = 0;
 
     virtual int prependLen(int mLen = -1) = 0;
     virtual int appendLen(int mLen = -1) = 0;
