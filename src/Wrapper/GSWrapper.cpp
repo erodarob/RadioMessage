@@ -60,5 +60,6 @@ int GSWrapper::unwrap(uint8_t *prependPos, uint8_t *appendPos)
 
 bool GSWrapper::messageComplete(Message *m)
 {
+    m->unwrap(this);
     return this->msgSize > 0 && m->size == this->msgSize;
 }

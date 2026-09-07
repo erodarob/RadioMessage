@@ -118,7 +118,6 @@ protected:
 
 private:
     Wrapper **wrs = nullptr;
-    bool *unwrapped = nullptr;
     uint16_t numWrappers = 0;
 
     uint16_t prependLen = 0;

@@ -15,6 +15,9 @@ using namespace std;
 #include "../Message.h"
 #include "../Types/PackedNum.h"
 
+// TODO: find a place for GSM file stuff
+#pragma message("Warning: The GSMessage class is deprecated! Please use GSWrapper instead.")
+
 class GSMessage : public Message
 {
 public:

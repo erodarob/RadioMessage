@@ -13,11 +13,16 @@ public:
     static const int ERR_ID = -type * 100;
     // Scale factors for encoding/decoding ignoring lat/long
     const double ALT_SCALE = (pow(91, 3) / 36000.0);       // (91^3/36000) scale to fit in 3 base91 characters
-    const double SPD_SCALE = (pow(91, 2) / 1000.0);        // (91^2/1000) scale to fit in 2 base91 characters
+    const double SPD_SCALE = (pow(91, 2) / 1500.0);        // (91^2/1500) scale to fit in 2 base91 characters
     const double HDG_SCALE = (pow(91, 2) / 360.0);         // (91^2/360) scale to fit in 2 base91 characters
     const double ORIENTATION_SCALE = (pow(91, 2) / 360.0); // same as heading
 
     const int ALT_OFFSET = +1000; // range of -1000 to 35000 ft.
+
+    const double MIN_ALT = 0.0 - ALT_OFFSET;     // ft
+    const double MAX_ALT = 36000.0 - ALT_OFFSET; // ft
+    const double MAX_SPD = 1500.0;               // knots
+    const double MAX_HDG = 360.0;                // deg
 
     double lat = 0.0;                            // decimal latitude
     double lng = 0.0;                            // decimal longitude

@@ -364,7 +364,6 @@ int main(int argc, char *argv[])
     for (int i = 0; i < m.size; i++)
     {
         mWrOut.append(m.buf[i]);
-        mWrOut.unwrap(&gswrOut);
         if (gswrOut.messageComplete(&mWrOut))
         {
             printf("Message complete at %d characters\n", mWrOut.size);
@@ -380,6 +379,57 @@ int main(int argc, char *argv[])
     printf("tocall: %s\n", telemWrOut2.config.tocall);
     printf("lat: %lf\n", telemWrOut2.lat);
     printf("lng: %lf\n", telemWrOut2.lng);
+
+    // SEWrapper testing and double wrapper testing
+    SEWrapper sewr;
+    m.clear();
+    m.reg(&sewr);
+
+    m.encode(&telem)->write();
+    printf("\n%d %d\n", m.buf[0], m.buf[m.size - 1]);
+
+    APRSTelem telemWrOutDouble;
+    Message mWrOutDouble(m.buf, m.size);
+    GSWrapper gswrOutDouble;
+    SEWrapper sewrDouble;
+
+    mWrOutDouble.reg(&gswrOutDouble);
+    mWrOutDouble.reg(&sewrDouble);
+    mWrOutDouble.decode(&telemWrOutDouble);
+
+    printf("se complete: %d\n", sewrDouble.messageComplete(&mWrOutDouble));
+    printf("id: %d\n", gswrOutDouble.id);
+    printf("type: %d\n", gswrOutDouble.dataType);
+    printf("size: %d\n", gswrOutDouble.msgSize);
+    printf("call: %s\n", telemWrOutDouble.config.callsign);
+    printf("tocall: %s\n", telemWrOutDouble.config.tocall);
+    printf("lat: %lf\n", telemWrOutDouble.lat);
+    printf("lng: %lf\n", telemWrOutDouble.lng);
+
+    APRSTelem telemWrOutDouble2;
+    mWrOutDouble.clear();
+    gswrOutDouble.id = 0;
+    gswrOutDouble.dataType = 0;
+    gswrOutDouble.msgSize = 0;
+    // test unwrap before complete message
+    for (int i = 0; i < m.size; i++)
+    {
+        mWrOutDouble.append(m.buf[i]);
+        if (sewrDouble.messageComplete(&mWrOutDouble))
+        {
+            printf("Message complete at %d characters\n", mWrOutDouble.size);
+        }
+    }
+
+    mWrOutDouble.decode(&telemWrOutDouble2);
+
+    printf("id: %d\n", gswrOutDouble.id);
+    printf("type: %d\n", gswrOutDouble.dataType);
+    printf("size: %d\n", gswrOutDouble.msgSize);
+    printf("call: %s\n", telemWrOutDouble2.config.callsign);
+    printf("tocall: %s\n", telemWrOutDouble2.config.tocall);
+    printf("lat: %lf\n", telemWrOutDouble2.lat);
+    printf("lng: %lf\n", telemWrOutDouble2.lng);
 
     printf("done\n");
     return 0;

@@ -45,13 +45,10 @@ public:
     int wrap(uint8_t *prependPos, uint8_t *appendPos) override;
     int unwrap(uint8_t *prependPos, uint8_t *appendPos) override;
 
-    uint16_t prependLen() override { return 3; };
+    uint16_t prependLen() override { return GSWrapper::headerLen; };
     uint16_t appendLen() override { return 0; };
 
     bool messageComplete(Message *m);
-
-private:
-    bool unwrapped = false;
 };
 
 #endif

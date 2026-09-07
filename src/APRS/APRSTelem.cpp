@@ -33,6 +33,7 @@ int APRSTelem::encode(uint8_t *data, uint16_t sz)
 
     // APRS header
     int err = this->encodeHeader(data, sz, pos);
+
     // check for errors
     if (err < 0)
         return APRSTelem::ERR_ID + err;
@@ -62,17 +63,57 @@ int APRSTelem::encode(uint8_t *data, uint16_t sz)
     if (sz < pos + 2 + 2 + 3)
         return APRSTelem::ERR_ID - 12; // error too small for heading, speed, and alt
 
-    numtoBase91(data, pos, (int)(this->hdg * HDG_SCALE), 2);                // (91^2/360) scale to fit in 2 base91 characters
-    numtoBase91(data, pos, (int)(this->spd * SPD_SCALE), 2);                // (91^2/1000) scale to fit in 2 base91 characters. 1000 knots is the assumed max speed.
-    numtoBase91(data, pos, (int)((this->alt + ALT_OFFSET) * ALT_SCALE), 3); // (91^3/35000) scale to fit in 3 base91 characters. 35000 feet is the assumed max altitude.
+    // check heading limits
+    if (this->hdg < 0)
+    {
+        while (this->hdg < 0)
+            this->hdg += 360;
+    }
+    // equals sign means 360 heading will become 0
+    if (this->hdg >= MAX_HDG)
+    {
+        while (this->hdg >= MAX_HDG)
+            this->hdg -= 360;
+    }
+
+    // check speed limits
+    if (this->spd < 0)
+        this->spd = 0;
+    if (this->spd > MAX_SPD)
+        this->spd = MAX_SPD;
+
+    // check alt limits
+    if (this->alt < MIN_ALT)
+        this->alt = MIN_ALT;
+    if (this->alt > MAX_ALT)
+        this->alt = MAX_ALT;
+
+    numtoBase91(data, pos, (int)(this->hdg * HDG_SCALE), 2);                  // (91^2/360) scale to fit in 2 base91 characters
+    numtoBase91(data, pos, (int)(this->spd * SPD_SCALE), 2);                  // (91^2/1500) scale to fit in 2 base91 characters. 1000 knots is the assumed max speed.
+    numtoBase91(data, pos, (int)(((this->alt + ALT_OFFSET) * ALT_SCALE)), 3); // (91^3/35000) scale to fit in 3 base91 characters. 35000 feet is the assumed max altitude.
+    // cap altitude at -1000, so any values lower than this will not be shown
 
     // orientation
     if (sz < pos + 2 + 2 + 2)
         return APRSTelem::ERR_ID - 13; // error too small for orientation
 
-    numtoBase91(data, pos, (int)(this->orient[0] * ORIENTATION_SCALE), 2); // (91^2/360) scale to fit in 2 base91 characters
-    numtoBase91(data, pos, (int)(this->orient[1] * ORIENTATION_SCALE), 2);
-    numtoBase91(data, pos, (int)(this->orient[2] * ORIENTATION_SCALE), 2);
+    // check all orientation limits (same as heading)
+    for (uint8_t i = 0; i < sizeof(this->orient) / sizeof(double); i++)
+    {
+        if (this->orient[i] < 0)
+        {
+            while (this->orient[i] < 0)
+                this->orient[i] += 360;
+        }
+        // equals sign means 360 heading will become 0
+        if (this->orient[i] >= MAX_HDG)
+        {
+            while (this->orient[i] >= MAX_HDG)
+                this->orient[i] -= 360;
+        }
+
+        numtoBase91(data, pos, (int)(this->orient[i] * ORIENTATION_SCALE), 2); // (91^2/360) scale to fit in 2 base91 characters
+    }
 
     // state info
     if (sz < pos + 5)

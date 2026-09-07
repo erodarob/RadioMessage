@@ -8,9 +8,7 @@ int APRSData::encodeHeader(uint8_t *data, uint16_t sz, uint16_t &pos)
     // cause error if config not set, without this everything is left blank
     // if (strlen(this->config.callsign) == 0 || strlen(this->config.tocall) == 0 || strlen(this->config.path) == 0)
     //     return 0; // error config not set properly
-    snprintf((char *)data, sz, "%s>%s,%s:", this->config.callsign, this->config.tocall, this->config.path);
-
-    pos += strlen((char *)data);
+    pos += snprintf((char *)data, sz, "%s>%s,%s:", this->config.callsign, this->config.tocall, this->config.path);
 
     return pos;
 }

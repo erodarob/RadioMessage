@@ -40,7 +40,6 @@ Message::~Message()
     if (this->wrs != nullptr)
     {
         delete[] this->wrs;
-        delete[] this->unwrapped;
     }
 }
 
@@ -50,7 +49,7 @@ Message *Message::encode(Data *data)
     int status = data->encode(this->buf + this->prependLen, this->maxSize - this->prependLen - this->appendLen);
     if (status > 0)
     {
-        this->size = status;
+        this->size = status + this->prependLen + this->appendLen;
         this->buf[this->size] = 0;
 
         // handle wrappers
@@ -91,13 +90,12 @@ Message *Message::wrap()
         // append pointer is at the end of the appended data
         uint16_t prependLen = this->wrs[i]->prependLen();
         uint16_t appendLen = this->wrs[i]->appendLen();
-        this->wrs[i]->wrap(this->buf + this->prependLen - cumPrependLen - prependLen, this->buf + this->prependLen + this->size + cumAppendLen + appendLen);
+        this->wrs[i]->wrap(this->buf + this->prependLen - cumPrependLen - prependLen, this->buf + this->size - (this->appendLen - cumAppendLen - appendLen));
         cumPrependLen += prependLen;
         cumAppendLen += appendLen;
     }
 
     // set size to the correct value, up until now size was the size of the encoded Data
-    this->size += this->prependLen + this->appendLen; // now size includes the wrappers
     this->buf[this->size] = 0;
 
     return this;
@@ -115,8 +113,7 @@ Message *Message::unwrap()
         {
             // make sure wrapper was not already unwrapped
             // and there is at least enough space for this wrapper
-            if (!this->unwrapped[i] &&
-                this->size >= cumPrependLen + this->wrs[i]->prependLen() + cumAppendLen + this->wrs[i]->appendLen())
+            if (this->size >= cumPrependLen + this->wrs[i]->prependLen() + cumAppendLen + this->wrs[i]->appendLen())
             {
                 // prepend pointer is at the start of the prepended data
                 // append pointer is at the end of the appended data
@@ -126,20 +123,22 @@ Message *Message::unwrap()
                     cumPrependLen += this->wrs[i]->prependLen();
                     cumAppendLen += this->wrs[i]->appendLen();
                 }
+                else
+                {
+                    // error unwrapping failure
+                    return this;
+                }
             }
-            else if (!this->unwrapped[i])
+            else
             {
-                // error
+                // error incorrect size
                 return this;
             }
-
-            // reset all out of order unwrapping flags
-            this->unwrapped[i] = false;
         }
     }
     else
     {
-        // error
+        // error no size
         return this;
     }
     return this;
@@ -163,7 +162,6 @@ Message *Message::unwrap(Wrapper *wr)
                 if (this->size >= (this->prependLen - cumPrependLen) && (this->wrs[i]->appendLen() == 0 || this->size > this->prependLen + cumAppendLen + this->wrs[i]->appendLen()))
                 {
                     this->wrs[i]->unwrap(this->buf + (this->prependLen - cumPrependLen - this->wrs[i]->prependLen()), this->buf + this->size - (this->appendLen - cumAppendLen - this->wrs[i]->appendLen()));
-                    this->unwrapped[i] = true;
                     // done since there is only one wrapper to unwrap
                     return this;
                 }
@@ -405,24 +403,19 @@ Message *Message::reg(Wrapper *wr)
 {
     // allocate memory in the array for the new wrapper
     Wrapper **newWrs = new Wrapper *[numWrappers + 1];
-    bool *newUnwrapped = new bool[numWrappers + 1];
 
     if (this->wrs != nullptr)
     {
         for (uint16_t i = 0; i < numWrappers; i++)
         {
             newWrs[i] = this->wrs[i];
-            newUnwrapped[i] = this->unwrapped[i];
         }
 
         delete[] this->wrs;
-        delete[] this->unwrapped;
     }
     newWrs[numWrappers] = wr;
-    newUnwrapped[numWrappers] = false;
     numWrappers++;
     this->wrs = newWrs;
-    this->unwrapped = newUnwrapped;
 
     this->prependLen += wr->prependLen();
     this->appendLen += wr->appendLen();
