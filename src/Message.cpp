@@ -40,13 +40,14 @@ Message::~Message()
     if (this->wrs != nullptr)
     {
         delete[] this->wrs;
+        delete[] this->unwrapped;
     }
 }
 
 Message *Message::encode(Data *data)
 {
     // encode the message
-    int status = data->encode(this->buf + this->knownPrependLen, this->maxSize - this->knownPrependLen - this->knownAppendLen);
+    int status = data->encode(this->buf + this->prependLen, this->maxSize - this->prependLen - this->appendLen);
     if (status > 0)
     {
         this->size = status;
@@ -81,45 +82,15 @@ Message *Message::clear()
 
 Message *Message::wrap()
 {
-    this->prependLen = 0;
-    this->appendLen = 0;
-    for (uint16_t i = 0; i < numWrappers; i++)
-    {
-        uint16_t prependLen = this->wrs[i]->prependLen(this->size + this->prependLen + this->appendLen);
-        uint16_t appendLen = this->wrs[i]->appendLen(this->size + this->prependLen + this->appendLen);
-        this->prependLen += prependLen;
-        this->appendLen += appendLen;
-    }
-
-    // TODO: remove after testing
-    if (this->prependLen < this->knownPrependLen || this->appendLen < this->knownAppendLen)
-    {
-        // this shouldn't happen
-        return this;
-    }
-
-    if (this->size > this->maxSize - this->prependLen - this->appendLen)
-    {
-        // error message with wrappers won't fit
-        return this;
-    }
-
-    // shift right if there is space and the size of the prepend region grew after message size was known
-    int moveBytesRight = this->prependLen - this->knownPrependLen;
-    if (moveBytesRight > 0 && this->size > this->maxSize - this->prependLen - this->appendLen)
-    {
-        memmove(this->buf + this->knownPrependLen + moveBytesRight, this->buf + this->knownPrependLen, this->size);
-    }
-
-    // we know there is enough space at this point
+    // we know there is enough space
     uint16_t cumPrependLen = 0;
     uint16_t cumAppendLen = 0;
     for (uint16_t i = 0; i < numWrappers; i++)
     {
         // prepend pointer is at the start of the prepended data
         // append pointer is at the end of the appended data
-        uint16_t prependLen = this->wrs[i]->prependLen(this->size + cumPrependLen + cumAppendLen);
-        uint16_t appendLen = this->wrs[i]->appendLen(this->size + cumPrependLen + cumAppendLen);
+        uint16_t prependLen = this->wrs[i]->prependLen();
+        uint16_t appendLen = this->wrs[i]->appendLen();
         this->wrs[i]->wrap(this->buf + this->prependLen - cumPrependLen - prependLen, this->buf + this->prependLen + this->size + cumAppendLen + appendLen);
         cumPrependLen += prependLen;
         cumAppendLen += appendLen;
@@ -128,6 +99,8 @@ Message *Message::wrap()
     // set size to the correct value, up until now size was the size of the encoded Data
     this->size += this->prependLen + this->appendLen; // now size includes the wrappers
     this->buf[this->size] = 0;
+
+    return this;
 }
 
 Message *Message::unwrap()
@@ -135,29 +108,84 @@ Message *Message::unwrap()
     if (this->size > 0)
     {
         // size includes the encoded data and the wrappers
-        this->prependLen = 0;
-        this->appendLen = 0;
+        uint16_t cumPrependLen = 0;
+        uint16_t cumAppendLen = 0;
         // going backwards
-        for (uint16_t i = numWrappers - 1; i >= 0; i--)
+        for (int i = numWrappers - 1; i >= 0; i--)
         {
-            if (this->wrs[i]->prependLen() + this->wrs[i]->appendLen() > 0 &&
-                this->wrs[i]->prependLen() + this->wrs[i]->appendLen() < this->size)
+            // make sure wrapper was not already unwrapped
+            // and there is at least enough space for this wrapper
+            if (!this->unwrapped[i] &&
+                this->size >= cumPrependLen + this->wrs[i]->prependLen() + cumAppendLen + this->wrs[i]->appendLen())
             {
-                uint16_t prependLen = 0;
-                uint16_t appendLen = 0;
                 // prepend pointer is at the start of the prepended data
                 // append pointer is at the end of the appended data
-                this->wrs[i]->unwrap(this->buf + this->prependLen, this->buf + this->size - this->appendLen, prependLen, appendLen);
-                this->prependLen += prependLen;
-                this->appendLen += appendLen;
+                // check if this wrapper was unwrapped successfully
+                if (this->wrs[i]->unwrap(this->buf + cumPrependLen, this->buf + this->size - cumAppendLen) > 0)
+                {
+                    cumPrependLen += this->wrs[i]->prependLen();
+                    cumAppendLen += this->wrs[i]->appendLen();
+                }
             }
-            else
+            else if (!this->unwrapped[i])
             {
                 // error
                 return this;
             }
+
+            // reset all out of order unwrapping flags
+            this->unwrapped[i] = false;
         }
     }
+    else
+    {
+        // error
+        return this;
+    }
+    return this;
+}
+
+Message *Message::unwrap(Wrapper *wr)
+{
+    uint16_t cumPrependLen = 0;
+    uint16_t cumAppendLen = 0;
+    for (uint16_t i = 0; i < numWrappers; i++)
+    {
+        // check if this pointer is in the list
+        if (wr == this->wrs[i])
+        {
+            // can only unwrap wrappers with a prepended component out of order
+            if (this->wrs[i]->prependLen() > 0)
+            {
+                // dumb size check, message must be longer than all earlier prepended wrappers and the prepend portion of this wrapper, if the wrapper has no append section
+                // if the wrapper has an append section, the message must be longer than the entire prepend section and any preceeding append sections
+                // ignores the size of the message itself, but prevents reading a prepended section as part of an appended section
+                if (this->size >= (this->prependLen - cumPrependLen) && (this->wrs[i]->appendLen() == 0 || this->size > this->prependLen + cumAppendLen + this->wrs[i]->appendLen()))
+                {
+                    this->wrs[i]->unwrap(this->buf + (this->prependLen - cumPrependLen - this->wrs[i]->prependLen()), this->buf + this->size - (this->appendLen - cumAppendLen - this->wrs[i]->appendLen()));
+                    this->unwrapped[i] = true;
+                    // done since there is only one wrapper to unwrap
+                    return this;
+                }
+                else
+                {
+                    // error not enough data
+                    return this;
+                }
+            }
+            else
+            {
+                // error wrapper is an appended wrapper
+                return this;
+            }
+        }
+
+        // always keep track of cumulative length so that we know where to look for a wrapper in the middle of the list
+        cumPrependLen += this->wrs[i]->prependLen();
+        cumAppendLen += this->wrs[i]->appendLen();
+    }
+
+    // error wrapper not found
     return this;
 }
 
@@ -377,25 +405,27 @@ Message *Message::reg(Wrapper *wr)
 {
     // allocate memory in the array for the new wrapper
     Wrapper **newWrs = new Wrapper *[numWrappers + 1];
+    bool *newUnwrapped = new bool[numWrappers + 1];
 
     if (this->wrs != nullptr)
     {
         for (uint16_t i = 0; i < numWrappers; i++)
         {
             newWrs[i] = this->wrs[i];
+            newUnwrapped[i] = this->unwrapped[i];
         }
 
         delete[] this->wrs;
+        delete[] this->unwrapped;
     }
-    newWrs[numWrappers++] = wr;
+    newWrs[numWrappers] = wr;
+    newUnwrapped[numWrappers] = false;
+    numWrappers++;
     this->wrs = newWrs;
+    this->unwrapped = newUnwrapped;
 
-    // add prepend and append lengths only if they are > 0 (those that are -1 will be updated after the message is generated)
-    if (wr->prependLen() > 0)
-        this->knownPrependLen += wr->prependLen();
-
-    if (wr->appendLen() > 0)
-        this->knownAppendLen += wr->appendLen();
+    this->prependLen += wr->prependLen();
+    this->appendLen += wr->appendLen();
 
     return this;
 }

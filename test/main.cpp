@@ -14,11 +14,6 @@ bool callback(char *cmd, uint16_t argc, char **argv);
 
 int main(int argc, char *argv[])
 {
-    GSWrapper gswr;
-    printf("prepend: %d, append: %d\n", gswr.prependLen(), gswr.appendLen());
-    Wrapper *wr = &gswr;
-    printf("prepend: %d, append: %d\n", wr->prependLen(), wr->appendLen());
-
     uint8_t e[] = {1, 3, 3, 1, 4, 12};
     PackedNum test(e, sizeof(e));
     uint64_t v[] = {0, 3, 2, 1, 15, 3000};
@@ -337,6 +332,54 @@ int main(int argc, char *argv[])
 
     if (m.append(nullptr, 10e5)->hasError())
         printf(m.errors());
+
+    // wrapper testing
+    GSWrapper gswr(APRSTelem::type, 2);
+    m.clear();
+    m.reg(&gswr);
+
+    m.encode(&telem)->write();
+    printf("\n%d %d %d\n", m.buf[0], m.buf[1], m.buf[2]);
+
+    APRSTelem telemWrOut;
+    Message mWrOut(m.buf, m.size);
+    GSWrapper gswrOut;
+    mWrOut.reg(&gswrOut);
+    mWrOut.decode(&telemWrOut);
+
+    printf("id: %d\n", gswrOut.id);
+    printf("type: %d\n", gswrOut.dataType);
+    printf("size: %d\n", gswrOut.msgSize);
+    printf("call: %s\n", telemWrOut.config.callsign);
+    printf("tocall: %s\n", telemWrOut.config.tocall);
+    printf("lat: %lf\n", telemWrOut.lat);
+    printf("lng: %lf\n", telemWrOut.lng);
+
+    APRSTelem telemWrOut2;
+    mWrOut.clear();
+    gswrOut.id = 0;
+    gswrOut.dataType = 0;
+    gswrOut.msgSize = 0;
+    // test unwrap before complete message
+    for (int i = 0; i < m.size; i++)
+    {
+        mWrOut.append(m.buf[i]);
+        mWrOut.unwrap(&gswrOut);
+        if (gswrOut.messageComplete(&mWrOut))
+        {
+            printf("Message complete at %d characters\n", mWrOut.size);
+        }
+    }
+
+    mWrOut.decode(&telemWrOut2);
+
+    printf("id: %d\n", gswrOut.id);
+    printf("type: %d\n", gswrOut.dataType);
+    printf("size: %d\n", gswrOut.msgSize);
+    printf("call: %s\n", telemWrOut2.config.callsign);
+    printf("tocall: %s\n", telemWrOut2.config.tocall);
+    printf("lat: %lf\n", telemWrOut2.lat);
+    printf("lng: %lf\n", telemWrOut2.lng);
 
     printf("done\n");
     return 0;

@@ -58,6 +58,7 @@ public:
 
     Message *wrap();
     Message *unwrap();
+    Message *unwrap(Wrapper *wr);
 
     // append the contents of ```data``` to the Message buffer, where ```data``` contains ```sz``` bytes, fails if final message size will be too large
     // Note: does not add message separator, use ```encode()``` to combine multiple messages
@@ -116,10 +117,10 @@ protected:
     void error(int err);
 
 private:
-    Wrapper **wrs;
+    Wrapper **wrs = nullptr;
+    bool *unwrapped = nullptr;
     uint16_t numWrappers = 0;
-    uint16_t knownPrependLen = 0;
-    uint16_t knownAppendLen = 0;
+
     uint16_t prependLen = 0;
     uint16_t appendLen = 0;
 };

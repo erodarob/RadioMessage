@@ -18,10 +18,10 @@ public:
     virtual ~Wrapper() {}; // Virtual destructor. Very important
 
     virtual int wrap(uint8_t *prependPos, uint8_t *appendPos) = 0;
-    virtual int unwrap(uint8_t *prependPos, uint8_t *appendPos, uint16_t &prependLen, uint16_t &appendLen) = 0;
+    virtual int unwrap(uint8_t *prependPos, uint8_t *appendPos) = 0;
 
-    virtual int prependLen(int mLen = -1) = 0;
-    virtual int appendLen(int mLen = -1) = 0;
+    virtual uint16_t prependLen() = 0;
+    virtual uint16_t appendLen() = 0;
 };
 
 #endif

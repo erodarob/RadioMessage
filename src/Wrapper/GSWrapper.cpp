@@ -14,6 +14,8 @@ void GSWrapper::getMetadata(uint8_t &streamType, uint8_t &streamId)
 
 int GSWrapper::wrap(uint8_t *prependPos, uint8_t *appendPos)
 {
+    // pointers point to the outer edges of this wrapper, so subtract the length of this wrapper
+    this->msgSize = appendPos - prependPos;
     // header
     // TISSss
     // T = type (4 bits)
@@ -29,7 +31,7 @@ int GSWrapper::wrap(uint8_t *prependPos, uint8_t *appendPos)
     return 1;
 }
 
-int GSWrapper::unwrap(uint8_t *prependPos, uint8_t *appendPos, uint16_t &prependLen, uint16_t &appendLen)
+int GSWrapper::unwrap(uint8_t *prependPos, uint8_t *appendPos)
 {
 
     // header
@@ -49,8 +51,14 @@ int GSWrapper::unwrap(uint8_t *prependPos, uint8_t *appendPos, uint16_t &prepend
         this->dataType = headerData[0];
         this->id = headerData[1];
         this->msgSize = headerData[2];
+        return 1;
     }
     // decodeHeader() sets: this->dataType, this->id, this->size
 
-    return 1;
+    return 0;
+}
+
+bool GSWrapper::messageComplete(Message *m)
+{
+    return this->msgSize > 0 && m->size == this->msgSize;
 }

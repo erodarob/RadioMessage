@@ -11,6 +11,7 @@
 using namespace std;
 #endif
 
+#include "../Message.h"
 #include "../Wrapper.h"
 #include "../Types/PackedNum.h"
 
@@ -34,6 +35,7 @@ public:
     PackedNum header = {headerEncoding, headerEncodingLength};
 
     GSWrapper() {};
+    GSWrapper(uint8_t streamType, uint8_t streamId) : dataType(streamType), id(streamId) {};
 
     // set the metadata for encoding from ```streamType``` and ```streamId```
     void setMetadata(uint8_t streamType, uint8_t streamId);
@@ -41,10 +43,15 @@ public:
     void getMetadata(uint8_t &streamType, uint8_t &streamId);
 
     int wrap(uint8_t *prependPos, uint8_t *appendPos) override;
-    int unwrap(uint8_t *prependPos, uint8_t *appendPos, uint16_t &prependLen, uint16_t &appendLen) override;
+    int unwrap(uint8_t *prependPos, uint8_t *appendPos) override;
 
-    int prependLen(int mLen = -1) override { return 3; };
-    int appendLen(int mLen = -1) override { return 0; };
+    uint16_t prependLen() override { return 3; };
+    uint16_t appendLen() override { return 0; };
+
+    bool messageComplete(Message *m);
+
+private:
+    bool unwrapped = false;
 };
 
 #endif
