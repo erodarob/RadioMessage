@@ -91,6 +91,10 @@ public:
 
     // wrappers
     Message *reg(Wrapper *wr);
+    Message *unreg(Wrapper *wr);
+
+    Message *enable(Wrapper *wr);
+    Message *disable(Wrapper *wr);
 
 #ifdef ARDUINO
     // prints the contents of the message over ```Serial```, \n terminated

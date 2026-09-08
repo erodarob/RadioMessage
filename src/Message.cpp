@@ -86,13 +86,28 @@ Message *Message::wrap()
     uint16_t cumAppendLen = 0;
     for (uint16_t i = 0; i < numWrappers; i++)
     {
-        // prepend pointer is at the start of the prepended data
-        // append pointer is at the end of the appended data
-        uint16_t prependLen = this->wrs[i]->prependLen();
-        uint16_t appendLen = this->wrs[i]->appendLen();
-        this->wrs[i]->wrap(this->buf + this->prependLen - cumPrependLen - prependLen, this->buf + this->size - (this->appendLen - cumAppendLen - appendLen));
-        cumPrependLen += prependLen;
-        cumAppendLen += appendLen;
+        if (this->wrs[i]->enabled)
+        {
+            // prepend pointer is at the start of the prepended data
+            // append pointer is at the end of the appended data
+            uint16_t prependLen = this->wrs[i]->prependLen();
+            uint16_t appendLen = this->wrs[i]->appendLen();
+            int res = this->wrs[i]->wrap(this->buf + this->prependLen - cumPrependLen - prependLen,
+                                         this->buf + this->size - (this->appendLen - cumAppendLen - appendLen));
+            if (res > 0)
+            {
+                cumPrependLen += prependLen;
+                cumAppendLen += appendLen;
+            }
+            else
+            {
+                // error wrapping failure
+                // add two errors, one indicating position in code, the next indicating wrapper index in the array
+                this->error(Message::ERR_ID - 1);
+                this->error(i);
+                // don't return since this shouldn't impact later wrappers
+            }
+        }
     }
 
     // set size to the correct value, up until now size was the size of the encoded Data
@@ -111,34 +126,41 @@ Message *Message::unwrap()
         // going backwards
         for (int i = numWrappers - 1; i >= 0; i--)
         {
-            // make sure wrapper was not already unwrapped
-            // and there is at least enough space for this wrapper
-            if (this->size >= cumPrependLen + this->wrs[i]->prependLen() + cumAppendLen + this->wrs[i]->appendLen())
+            if (this->wrs[i]->enabled)
             {
-                // prepend pointer is at the start of the prepended data
-                // append pointer is at the end of the appended data
-                // check if this wrapper was unwrapped successfully
-                if (this->wrs[i]->unwrap(this->buf + cumPrependLen, this->buf + this->size - cumAppendLen) > 0)
+                // make sure wrapper was not already unwrapped
+                // and there is at least enough space for this wrapper
+                if (this->size >= cumPrependLen + this->wrs[i]->prependLen() + cumAppendLen + this->wrs[i]->appendLen())
                 {
+                    // prepend pointer is at the start of the prepended data
+                    // append pointer is at the end of the appended data
+                    // check if this wrapper was unwrapped successfully
+                    if (!this->wrs[i]->unwrap(this->buf + cumPrependLen, this->buf + this->size - cumAppendLen) > 0)
+                    {
+                        // error unwrapping failure
+                        // add two errors, one indicating position in code, the next indicating wrapper index in the array
+                        this->error(Message::ERR_ID - 2);
+                        this->error(i);
+                        // don't return since this shouldn't impact later wrappers
+                    }
                     cumPrependLen += this->wrs[i]->prependLen();
                     cumAppendLen += this->wrs[i]->appendLen();
                 }
                 else
                 {
-                    // error unwrapping failure
+                    // error not enough data
+                    // add two errors, one indicating position in code, the next indicating wrapper index in the array
+                    this->error(Message::ERR_ID - 3);
+                    this->error(i);
                     return this;
                 }
-            }
-            else
-            {
-                // error incorrect size
-                return this;
             }
         }
     }
     else
     {
-        // error no size
+        // error size is zero
+        this->error(Message::ERR_ID - 4);
         return this;
     }
     return this;
@@ -146,6 +168,10 @@ Message *Message::unwrap()
 
 Message *Message::unwrap(Wrapper *wr)
 {
+    // check if wrapper is enabled
+    if (!wr->enabled)
+        return this;
+
     uint16_t cumPrependLen = 0;
     uint16_t cumAppendLen = 0;
     for (uint16_t i = 0; i < numWrappers; i++)
@@ -156,24 +182,36 @@ Message *Message::unwrap(Wrapper *wr)
             // can only unwrap wrappers with a prepended component out of order
             if (this->wrs[i]->prependLen() > 0)
             {
-                // dumb size check, message must be longer than all earlier prepended wrappers and the prepend portion of this wrapper, if the wrapper has no append section
-                // if the wrapper has an append section, the message must be longer than the entire prepend section and any preceeding append sections
+                // dumb size check
                 // ignores the size of the message itself, but prevents reading a prepended section as part of an appended section
-                if (this->size >= (this->prependLen - cumPrependLen) && (this->wrs[i]->appendLen() == 0 || this->size > this->prependLen + cumAppendLen + this->wrs[i]->appendLen()))
+                // if wrapper has no append section
+                // message must be longer than all earlier prepended wrappers, including this wrapper
+                // if the wrapper has an append section
+                // message must be longer than the entire prepend section and any preceeding append sections
+                if (this->size >= (this->prependLen - cumPrependLen) &&
+                    (this->wrs[i]->appendLen() == 0 || this->size > this->prependLen + cumAppendLen + this->wrs[i]->appendLen()))
                 {
-                    this->wrs[i]->unwrap(this->buf + (this->prependLen - cumPrependLen - this->wrs[i]->prependLen()), this->buf + this->size - (this->appendLen - cumAppendLen - this->wrs[i]->appendLen()));
+                    if (!this->wrs[i]->unwrap(this->buf + (this->prependLen - cumPrependLen - this->wrs[i]->prependLen()),
+                                              this->buf + this->size - (this->appendLen - cumAppendLen - this->wrs[i]->appendLen())))
+                    {
+                        // error unwrapping failure
+                        // the wrapper where this error occurs is given, so no need to indicate index here
+                        this->error(Message::ERR_ID - 5);
+                    }
                     // done since there is only one wrapper to unwrap
                     return this;
                 }
                 else
                 {
                     // error not enough data
+                    this->error(Message::ERR_ID - 6);
                     return this;
                 }
             }
             else
             {
                 // error wrapper is an appended wrapper
+                this->error(Message::ERR_ID - 7);
                 return this;
             }
         }
@@ -184,6 +222,7 @@ Message *Message::unwrap(Wrapper *wr)
     }
 
     // error wrapper not found
+    this->error(Message::ERR_ID - 8);
     return this;
 }
 
@@ -198,7 +237,7 @@ Message *Message::append(uint8_t *data, uint16_t sz)
     }
     else
     {
-        this->error(Message::ERR_ID - 1);
+        this->error(Message::ERR_ID - 9);
     }
     return this;
 }
@@ -215,7 +254,7 @@ Message *Message::append(uint8_t data)
     }
     else
     {
-        this->error(Message::ERR_ID - 2);
+        this->error(Message::ERR_ID - 10);
     }
     return this;
 }
@@ -254,7 +293,7 @@ Message *Message::pop(uint8_t *data, uint16_t &sz)
     else
     {
         sz = 0;
-        this->error(Message::ERR_ID - 3);
+        this->error(Message::ERR_ID - 11);
     }
     return this;
 }
@@ -297,7 +336,7 @@ Message *Message::shift(uint8_t *data, uint16_t &sz)
     else
     {
         sz = 0;
-        this->error(Message::ERR_ID - 4);
+        this->error(Message::ERR_ID - 12);
     }
     return this;
 }
@@ -369,7 +408,7 @@ Message *Message::get(uint8_t *data, uint16_t &sz, uint16_t start, uint16_t end)
     else
     {
         sz = 0;
-        this->error(Message::ERR_ID - 5);
+        this->error(Message::ERR_ID - 13);
     }
     return this;
 }
@@ -421,6 +460,71 @@ Message *Message::reg(Wrapper *wr)
     this->appendLen += wr->appendLen();
 
     return this;
+}
+
+Message *Message::unreg(Wrapper *wr)
+{
+    // decrease array size for removed wrapper
+    Wrapper **newWrs = new Wrapper *[numWrappers - 1];
+
+    // wrap everything in a nullptr check
+    // cause if the wrapper array doesn't exist, there's nothing to do anyway
+    if (this->wrs != nullptr)
+    {
+        // find the index of the wrapper to be removed
+        int wrFound = -1;
+        for (uint16_t i = 0; i < numWrappers; i++)
+        {
+            if (this->wrs[i] == wr)
+            {
+                wrFound = i;
+                break;
+            }
+        }
+
+        if (wrFound >= 0)
+        {
+            // assemble new array
+            for (uint16_t i = 0; i < numWrappers; i++)
+            {
+                // if before wrapper to be removed, indices are equal
+                if (i < wrFound)
+                {
+                    newWrs[i] = this->wrs[i];
+                }
+                // if after newWrs is one less than wrs
+                if (i > wrFound)
+                {
+                    newWrs[i - 1] = this->wrs[i];
+                }
+            }
+            delete[] this->wrs;
+        }
+        else
+        {
+            // warning, wrapper not previously registered
+            // don't need to actually create an error here
+            return this;
+        }
+
+        numWrappers--;
+        this->wrs = newWrs;
+
+        this->prependLen -= wr->prependLen();
+        this->appendLen -= wr->appendLen();
+    }
+
+    return this;
+}
+
+Message *Message::enable(Wrapper *wr)
+{
+    wr->enabled = true;
+}
+
+Message *Message::disable(Wrapper *wr)
+{
+    wr->enabled = false;
 }
 
 #ifdef ARDUINO

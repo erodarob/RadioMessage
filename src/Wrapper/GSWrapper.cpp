@@ -33,7 +33,6 @@ int GSWrapper::wrap(uint8_t *prependPos, uint8_t *appendPos)
 
 int GSWrapper::unwrap(uint8_t *prependPos, uint8_t *appendPos)
 {
-
     // header
     // TISSss
     // T = type (4 bits)

@@ -14,7 +14,7 @@ using namespace std;
 class Wrapper
 {
 public:
-    bool enabled = false;
+    bool enabled = true;
     virtual ~Wrapper() {}; // Virtual destructor. Very important
 
     virtual int wrap(uint8_t *prependPos, uint8_t *appendPos) = 0;
