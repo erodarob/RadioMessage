@@ -110,9 +110,6 @@ Message *Message::wrap()
         }
     }
 
-    // set size to the correct value, up until now size was the size of the encoded Data
-    this->buf[this->size] = 0;
-
     return this;
 }
 
@@ -519,12 +516,44 @@ Message *Message::unreg(Wrapper *wr)
 
 Message *Message::enable(Wrapper *wr)
 {
-    wr->enabled = true;
+    // ensure wrapper is registered
+    for (uint16_t i = 0; i < numWrappers; i++)
+    {
+        if (this->wrs[i] == wr)
+        {
+            // enable wrapper if not already enabled
+            if (!wr->enabled)
+            {
+                wr->enabled = true;
+                this->prependLen += wr->prependLen();
+                this->appendLen += wr->appendLen();
+            }
+            break;
+        }
+    }
+
+    return this;
 }
 
 Message *Message::disable(Wrapper *wr)
 {
-    wr->enabled = false;
+    // ensure wrapper is registered
+    for (uint16_t i = 0; i < numWrappers; i++)
+    {
+        if (this->wrs[i] == wr)
+        {
+            // disable wrapper if not already disabled
+            if (wr->enabled)
+            {
+                wr->enabled = false;
+                this->prependLen -= wr->prependLen();
+                this->appendLen -= wr->appendLen();
+            }
+            break;
+        }
+    }
+
+    return this;
 }
 
 #ifdef ARDUINO

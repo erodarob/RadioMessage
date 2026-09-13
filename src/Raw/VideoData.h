@@ -21,7 +21,7 @@ public:
     static const uint16_t maxSize = 0x1FFF - 1;
 
     // VideoData type
-    static const uint8_t type = 0x08;
+    static const uint8_t type = 0x09;
     // type error ID
     static const int ERR_ID = -type * 100;
 

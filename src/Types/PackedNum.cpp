@@ -32,6 +32,7 @@ PackedNum::PackedNum(uint8_t n)
     this->num = new uint8_t;
     *(uint8_t *)this->num = n;
     this->type = PT_UINT8;
+    this->totalBytes = sizeof(uint8_t);
 }
 
 PackedNum::PackedNum(uint16_t n)
@@ -40,6 +41,7 @@ PackedNum::PackedNum(uint16_t n)
     this->num = new uint16_t;
     *(uint16_t *)this->num = n;
     this->type = PT_UINT16;
+    this->totalBytes = sizeof(uint16_t);
 }
 
 PackedNum::PackedNum(uint32_t n)
@@ -48,6 +50,7 @@ PackedNum::PackedNum(uint32_t n)
     this->num = new uint32_t;
     *(uint32_t *)this->num = n;
     this->type = PT_UINT32;
+    this->totalBytes = sizeof(uint32_t);
 }
 
 PackedNum::PackedNum(uint64_t n)
@@ -56,6 +59,7 @@ PackedNum::PackedNum(uint64_t n)
     this->num = new uint64_t;
     *(uint64_t *)this->num = n;
     this->type = PT_UINT64;
+    this->totalBytes = sizeof(uint64_t);
 }
 
 PackedNum::PackedNum(const uint8_t *widths, int length)

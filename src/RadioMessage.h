@@ -34,5 +34,6 @@
 // pull Wrappers
 #include "Wrapper/GSWrapper.h"
 #include "Wrapper/SEWrapper.h"
+#include "Wrapper/GSMWrapper.h"
 
 #endif

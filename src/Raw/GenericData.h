@@ -9,7 +9,7 @@ public:
     // the maximum size of the data
     static const uint16_t maxSize = 0x1FFF;
     // GenericData type
-    static const uint8_t type = 0x07;
+    static const uint8_t type = 0x08;
     // type error ID
     static const int ERR_ID = -type * 100;
 

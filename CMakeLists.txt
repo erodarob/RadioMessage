@@ -15,5 +15,6 @@ add_library(Message STATIC ${LIB_DIR}/Message.cpp
     ${LIB_DIR}/Raw/VideoData.cpp 
     ${LIB_DIR}/Types/PackedNum.cpp
     ${LIB_DIR}/Wrapper/GSWrapper.cpp
-    ${LIB_DIR}/Wrapper/SEWrapper.cpp)
+    ${LIB_DIR}/Wrapper/SEWrapper.cpp
+    ${LIB_DIR}/Wrapper/GSMWrapper.cpp)
 target_include_directories(Message PUBLIC ${LIB_DIR})

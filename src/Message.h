@@ -25,6 +25,7 @@ public:
     static const uint16_t maxSize = MSG_SIZE_OVRD;
 #endif
 
+    // Message error ID
     static const int ERR_ID = -0;
 
     // the buffer that stores the message data
@@ -45,9 +46,10 @@ public:
     // - data : a ```Data``` object that will be encoded into the Message buffer
     Message(Data *data);
 
+    // Message destructor
     ~Message();
 
-    // use return type Message* so we can stack operators e.g., ```Message()->fill()->encode()```
+    // use return type Message* so we can stack operators e.g., ```Message()->encode()->print()```
 
     // encodes ```data``` and places the output in the Message buffer
     virtual Message *encode(Data *data);
@@ -56,13 +58,17 @@ public:
     // clears all stored data
     Message *clear();
 
+    // wrap the current buffer using all registered wrappers, assumes the buffer is padded with enough space
     Message *wrap();
+    // unwrap the current buffer using all registered wrappers, assumes the complete message is in the buffer
     Message *unwrap();
+    // unwrap the current buffer using the specifed Wrapper ```wr```, taking into account the proper ordering of registered wrappers
+    // can be used to unwrap wrappers before the message is completed (e.g. to unwrap a length header), but the wrapper must have a prepended section
     Message *unwrap(Wrapper *wr);
 
     // append the contents of ```data``` to the Message buffer, where ```data``` contains ```sz``` bytes, fails if final message size will be too large
-    // Note: does not add message separator, use ```encode()``` to combine multiple messages
     Message *append(uint8_t *data, uint16_t sz);
+    // append the byte ```data``` to the Message buffer, fails if final message size will be too large
     Message *append(uint8_t data);
     // remove the last ```sz``` bytes from the Message buffer and place them in ```data```, ```sz``` is set to the number of bytes copied
     Message *pop(uint8_t *data, uint16_t &sz);
@@ -86,14 +92,22 @@ public:
     Message *get(uint8_t *data, uint16_t &sz, uint16_t start, uint16_t end);
 
     // error handling
+
+    // check if there are pending errors
     bool hasError();
+    // get the pending errors
     char *errors();
 
     // wrappers
+
+    // register a Wrapper ```wr``` with this Message to be used in wrapping and unwrapping data
     Message *reg(Wrapper *wr);
+    // unregsiter a previously registered Wrapper ```wr```
     Message *unreg(Wrapper *wr);
 
+    // enable a previously disabled Wrapper ```wr```
     Message *enable(Wrapper *wr);
+    // disable a previously registered Wrapper ```wr``` without needing to unregister it
     Message *disable(Wrapper *wr);
 
 #ifdef ARDUINO
@@ -115,16 +129,23 @@ public:
 #endif
 
 protected:
+    // whether there are pending errors
     bool err = false;
+    // a string containing the pending errors
     char errStr[32] = {0};
 
+    // add a new error ```err``` to the error string
     void error(int err);
 
 private:
+    // a list of all registered Wrappers
     Wrapper **wrs = nullptr;
+    // the number of registered Wrappers
     uint16_t numWrappers = 0;
 
+    // the total length of all prepended Wrapper sections
     uint16_t prependLen = 0;
+    // the total length of all appeneded Wrapper sections
     uint16_t appendLen = 0;
 };
 

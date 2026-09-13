@@ -9,7 +9,7 @@ class HITLData : public Data
 {
 public:
     // HITLData type
-    static const uint8_t type = 0x09;
+    static const uint8_t type = 0x07;
     // type error ID
     static const int ERR_ID = -type * 100;
     //  ---- Time ----

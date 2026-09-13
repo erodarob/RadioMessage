@@ -128,7 +128,7 @@ int Metrics::fromJSON(char *json, uint16_t sz, int &deviceId)
         return Metrics::ERR_ID - 5;
     if (!extractStr(json, sz, "\"bitrate\":", ',', bitrateStr, sizeof(bitrateStr)))
         return Metrics::ERR_ID - 6;
-    if (!extractStr(json, sz, "\"rssi\":", ',', rssiStr, sizeof(rssiStr)))
+    if (!extractStr(json, sz, "\"rssi\":", '}', rssiStr, sizeof(rssiStr)))
         return Metrics::ERR_ID - 7;
 
     // convert to correct data type
