@@ -34,7 +34,12 @@ public:
     // stores the header for this message in the order dataType, id, deviceId, size (first 4), size (last 8)
     PackedNum header = {headerEncoding, headerEncodingLength};
 
+    // GSWrapper default constructor
     GSWrapper() {};
+
+    // GSWrapper constructor
+    // streamType - the RadioMessage type of the stream (e.g. APRSTelem::type)
+    // streamId - the unique id identifying this stream
     GSWrapper(uint8_t streamType, uint8_t streamId) : dataType(streamType), id(streamId) {};
 
     // set the metadata for encoding from ```streamType``` and ```streamId```
@@ -42,12 +47,17 @@ public:
     // retrieve metadata and place into ```streamType``` and ```streamId```
     void getMetadata(uint8_t &streamType, uint8_t &streamId);
 
+    // wrap the Message using data from this Wrapper, with the prepended data starting at ```prependPos``` and the appeneded data starting at ```appendPos```
     int wrap(uint8_t *prependPos, uint8_t *appendPos) override;
+    // unwrap the Message putting data into this Wrapper, with the prepended data starting at ```prependPos``` and the appeneded data starting at ```appendPos```
     int unwrap(uint8_t *prependPos, uint8_t *appendPos) override;
 
+    // get the length of the data this Wrapper prepends to the Message
     uint16_t prependLen() override { return GSWrapper::headerLen; };
+    // get the length of the data this Wrapper appends to the Message
     uint16_t appendLen() override { return 0; };
 
+    // returns whether the Message ```m``` is complete according to data unwrapped from ```m``` into this wrapper
     bool messageComplete(Message *m);
 };
 

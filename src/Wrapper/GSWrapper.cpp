@@ -59,6 +59,8 @@ int GSWrapper::unwrap(uint8_t *prependPos, uint8_t *appendPos)
 
 bool GSWrapper::messageComplete(Message *m)
 {
+    // unwrap the message first
     m->unwrap(this);
+    // the return whether the Message length matches the decoded length (inclusive of the length of this wrapper)
     return this->msgSize > 0 && m->size == this->msgSize;
 }

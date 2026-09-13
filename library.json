@@ -1,6 +1,6 @@
 {
   "name": "RadioMessage",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "A library to handle encoding and decoding various types of messages",
   "authors":
   [
