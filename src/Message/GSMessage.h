@@ -17,6 +17,7 @@ using namespace std;
 
 #pragma message("Warning: The GSMessage class is deprecated! Please use GSWrapper instead.")
 
+/** \deprecated the GSMessage class is deprecated */
 class GSMessage : public Message
 {
 public:
