@@ -14,19 +14,38 @@ using namespace std;
 class Wrapper
 {
 public:
-    // whether this wrapper is enabled, generally managed by a Message object
+    /** whether this wrapper is enabled, generally managed by a Message object */
     bool enabled = true;
 
-    virtual ~Wrapper() {}; // Virtual destructor. Very important
+    /**
+     * Virtual destructor. Very important
+     */
+    virtual ~Wrapper() {};
 
-    // wrap the Message using data from this Wrapper, with the prepended data starting at ```prependPos``` and the appeneded data starting at ```appendPos```
+    /**
+     * Wrap the Message using data from this Wrapper
+     * @param prependPos the start of the prepended data for this Wrapper in the Message buffer
+     * @param appendPos the end of the appended data for this Wrapper in the Message buffer
+     * @return the result of the wrapping operation, usually the length of bytes added, always greater than 0 if successful
+     */
     virtual int wrap(uint8_t *prependPos, uint8_t *appendPos) = 0;
-    // unwrap the Message putting data into this Wrapper, with the prepended data starting at ```prependPos``` and the appeneded data starting at ```appendPos```
+    /**
+     * Unwrap the Message putting data into this Wrapper
+     * @param prependPos the start of the prepended data for this Wrapper in the Message buffer
+     * @param appendPos the end of the appended data for this Wrapper in the Message buffer
+     * @return the result of the unwrapping operation, usually the length of bytes added, always greater than 0 if successful
+     */
     virtual int unwrap(uint8_t *prependPos, uint8_t *appendPos) = 0;
 
-    // get the length of the data this Wrapper prepends to the Message
+    /**
+     * Get the length of the data this Wrapper prepends to the Message
+     * @return the length of the prepended data
+     */
     virtual uint16_t prependLen() = 0;
-    // get the length of the data this Wrapper appends to the Message
+    /**
+     * Get the length of the data this Wrapper appends to the Message
+     * @return the length of the appended data
+     */
     virtual uint16_t appendLen() = 0;
 };
 

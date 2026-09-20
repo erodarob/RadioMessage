@@ -18,32 +18,58 @@ using namespace std;
 class SEWrapper : public Wrapper
 {
 public:
+    /** the start character */
     uint8_t start = 0xff;
+    /** the end character */
     uint8_t end = 0x01;
 
-    // SEWrapper default constructor
+    /**
+     * SEWrapper default constructor
+     */
     SEWrapper() {};
 
-    // SEWrapper constructor
-    // - start : the start character
-    // - end : the end character
+    /**
+     * SEWrapper constructor
+     * @param start the start character
+     * @param end the end character
+     */
     SEWrapper(uint8_t start, uint8_t end) : start(start), end(end) {};
 
-    // wrap the Message using data from this Wrapper, with the prepended data starting at ```prependPos``` and the appeneded data starting at ```appendPos```
+    /**
+     * Wrap the Message using data from this Wrapper
+     * @param prependPos the start of the prepended data for this Wrapper in the Message buffer
+     * @param appendPos the end of the appended data for this Wrapper in the Message buffer
+     * @return the result of the wrapping operation, usually the length of bytes added, always greater than 0 if successful
+     */
     int wrap(uint8_t *prependPos, uint8_t *appendPos) override;
-    // unwrap the Message putting data into this Wrapper, with the prepended data starting at ```prependPos``` and the appeneded data starting at ```appendPos```
+    /**
+     * Unwrap the Message putting data into this Wrapper
+     * @param prependPos the start of the prepended data for this Wrapper in the Message buffer
+     * @param appendPos the end of the appended data for this Wrapper in the Message buffer
+     * @return the result of the unwrapping operation, usually the length of bytes added, always greater than 0 if successful
+     */
     int unwrap(uint8_t *prependPos, uint8_t *appendPos) override;
 
-    // get the length of the data this Wrapper prepends to the Message
+    /**
+     * Get the length of the data this Wrapper prepends to the Message
+     * @return the length of the prepended data
+     */
     uint16_t prependLen() override { return 1; };
-    // get the length of the data this Wrapper appends to the Message
+    /**
+     * Get the length of the data this Wrapper appends to the Message
+     * @return the length of the appended data
+     */
     uint16_t appendLen() override { return 1; };
 
-    // returns whether the Message ```m``` is complete according to data unwrapped from ```m``` into this wrapper
+    /**
+     * Check whether the given Message is complete according to data unwrapped from the Message into this Wrapper
+     * @param m a pointer to the Message to check
+     * @return whether the Message is complete
+     */
     bool messageComplete(Message *m);
 
 private:
-    // indicates whether unwrapping was successful (i.e. the Message is complete), reset by ```messageComplete()```
+    /** internally indicates whether unwrapping was successful (i.e. the Message is complete), reset by messageComplete() */
     bool success = false;
 };
 

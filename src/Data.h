@@ -17,27 +17,57 @@ using namespace std;
 class Data
 {
 public:
+    /** the type of the Data subclass, unique to each */
     static const uint8_t type;
+    /** the error ID of the Data subclass, used to identify errors encountered during encoding/decoding */
     static const int ERR_ID;
 
-    virtual ~Data() {}; // Virtual destructor. Very important
-    // encode the data stored in the ```Data``` object and place the result in ```data```, ```sz``` is the max size of ```data```
+    /**
+     * Virtual destructor. Very important
+     */
+    virtual ~Data() {};
+    /**
+     * Encode the data stored in the Data object and place it in the provided buffer
+     * @param data a pointer to the array to place the data in
+     * @param sz the maximum length of the data array
+     * @return the result of the encoding, the length of bytes added if successful, otherwise an error code less than 0
+     */
     virtual int encode(uint8_t *data, uint16_t sz) = 0;
-    // decode the data stored in ```data``` and place it in the ```Data``` object, ```sz``` is the number of bytes from ```data``` to decode
+    /**
+     * Decode the data stored in the the provided buffer and place it in the Data object
+     * @param data a pointer to the array to extract data from
+     * @param sz the length of the data array
+     * @return the result of the decoding, the length of bytes decoded if successful, otherwise an error code less than 0
+     */
     virtual int decode(uint8_t *data, uint16_t sz) = 0;
 
-    // place the data in the ```Data``` object in the ```json``` string, ```sz``` is the max size of the string, ```deviceId``` can be set based on hardware
+    /**
+     * Encode the data in the Data object into a JSON format
+     * @param json the string to place the JSON into
+     * @param sz the maximum size of the json string
+     * @param deviceId a number indicating the hardware the data came from
+     * @return the result of the encoding, the length of bytes added if successful, otherwise an error code less than 0
+     */
     virtual int toJSON(char *json, uint16_t sz, int deviceId) = 0;
-    // place the data in the ```json``` string in the ```Data``` object, ```sz``` is the max size of the string, ```deviceId``` can be set based on hardware
+    /**
+     * Decode the data from a JSON format into the Data object
+     * @param json the JSON string to extract data from
+     * @param sz the size of the json string
+     * @param deviceId a number indicating the hardware the data came from, decoded separately from the JSON
+     * @return the result of the decoding, greater than 0 if successful, otherwise an error code less than 0
+     */
     virtual int fromJSON(char *json, uint16_t sz, int &deviceId) = 0;
 
-    // extract a substing from a string
-    // - src: the string to take the substring from
-    // - szSource: the size of the ```src``` string
-    // - lookFor: the substring to look for to start the substring
-    // - stopCond: the char to look for to stop the substring
-    // - dest: the string to place the substring into
-    // - szDest: the size of the ```dest``` string
+    /**
+     * Extract a substing from a string
+     * @param src the string to take the substring from
+     * @param szSource the size of the source string
+     * @param lookFor the substring to look for to start the substring
+     * @param stopCond the char to look for to stop the substring
+     * @param dest the string to place the substring into
+     * @param szDest the size of the destination string
+     * @return whether the substring was located
+     */
     static bool extractStr(char *src, int szSource, const char *lookFor, char stopCond, char *dest, int szDest = -1)
     {
         // find to position of the start of the lookFor string
@@ -53,6 +83,8 @@ public:
         {
             dest[counter++] = src[pos++];
         }
+        // ensure null terminated
+        dest[counter] = 0;
         return true;
     }
 };

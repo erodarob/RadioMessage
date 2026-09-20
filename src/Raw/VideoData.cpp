@@ -109,7 +109,7 @@ int VideoData::fromJSON(char *json, uint16_t sz, int &deviceId)
         return VideoData::ERR_ID - 7;
 
     // set encoding
-    this->setEncoding(encodingStr, sizeof(encodingStr));
+    this->setEncoding(encodingStr);
 
     // convert to correct data type
     deviceId = atoi(deviceIdStr);
@@ -174,7 +174,7 @@ void VideoData::getEncodingStr(char *str, int sz)
     }
 }
 
-void VideoData::setEncoding(char *str, int sz)
+void VideoData::setEncoding(char *str)
 {
     if (strcmp(str, "AV1") == 0)
         this->encoding = AV1;

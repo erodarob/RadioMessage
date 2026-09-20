@@ -11,9 +11,9 @@
 using namespace std;
 #endif
 
-// TODO: write pack and unpack functions for uint16
-
-// the different possible sizes of the number
+/**
+ * The different possible sizes of the number
+ */
 enum PackedSize
 {
     PT_UINT8 = 8,
@@ -26,63 +26,97 @@ enum PackedSize
 class PackedNum
 {
 public:
-    // the size of the number
+    /** the size of the number */
     PackedSize type = PT_UINT8;
-    // the number
+    /** the number */
     void *num;
-    // the encoding for the number
+    /** the encoding for the number */
     uint8_t *encoding = new uint8_t[1];
-    // the length of the encoding
+    /** the length of the encoding */
     int encodingLength = 0;
-    // the total number of bits in the encoding
+    /** the total number of bits in the encoding */
     int totalBits = 0;
-    // the total number of bytes in the encoding, rounded up
+    /** the total number of bytes in the encoding, rounded up */
     int totalBytes = 0;
 
-    // PackedNum constructor
-    // - t: the size of the number
+    /**
+     * PackedNum constructor
+     * @param t the size of the number
+     */
     PackedNum(PackedSize t = PT_UINT8);
-    // PackedNum constructor
-    // - n: the number, sets the type to PT_UINT8
+    /**
+     * PackedNum constructor
+     * @param n the number, sets the type to PT_UINT8
+     */
     PackedNum(uint8_t n);
-    // PackedNum constructor
-    // - n: the number, sets the type to PT_UINT16
+    /**
+     * PackedNum constructor
+     * @param n the number, sets the type to PT_UINT16
+     */
     PackedNum(uint16_t n);
-    // PackedNum constructor
-    // - n: the number, sets the type to PT_UINT32
+    /**
+     * PackedNum constructor
+     * @param n the number, sets the type to PT_UINT32
+     */
     PackedNum(uint32_t n);
-    // PackedNum constructor
-    // - n: the number, sets the type to PT_UINT64
+    /**
+     * PackedNum constructor
+     * @param n the number, sets the type to PT_UINT64
+     */
     PackedNum(uint64_t n);
-    // PackedNum constructor
-    // - widths: the width of each number in the encoding
-    // - length: the number of entries in widths
+    /**
+     * PackedNum constructor
+     * @param widths the width of each number in the encoding
+     * @param length the number of entries in widths
+     */
     PackedNum(const uint8_t *widths, int length);
 
-    // destructor
+    /**
+     * PackedNum destructor
+     */
     ~PackedNum();
 
-    // set encoding after constructor
-    // - widths: the width of each number in the encoding
-    // - length: the number of entries in widths
+    /**
+     * Set encoding after constructor
+     * @param widths the width of each number in the encoding
+     * @param length the number of entries in widths
+     * @return whether the encoding is valid for this type
+     */
     bool setEncoding(const uint8_t *widths, int length);
-    // encode values into the number based on encoding
-    // - vals: the values to encode (same length as encoding)
+    /**
+     * Encode values into the number based on encoding
+     * @param vals the values to encode (same length as encoding)
+     * @return whether the packing was successful
+     */
     bool pack(uint64_t *vals);
-    // decode into values from number based on encoding
-    // - vals: an array to decode values into (same length as encoding)
+    /**
+     * Decode into values from number based on encoding
+     * @param vals an array to decode values into (same length as encoding)
+     * @return whether the unpacking was successful
+     */
     bool unpack(uint64_t *vals);
 
-    // set the value of the number, automatically truncated and converted to correct type
-    // - n: the new number
+    /**
+     * set the value of the number, automatically truncated and converted to correct type
+     * @param n the new number
+     */
     void set(uint64_t n);
-    // set the value of the number, read from an uint8_t array, this->totalBytes must be available
-    // - arr: the array to read from
+    /**
+     * Set the value of the number, read from an uint8_t array
+     * @param arr the array to read from, must be as long as the number of bytes in this number (check totalBytes)
+     * @return whether the number was set correctly
+     */
     bool set(uint8_t *arr);
-    // get the value of the number, automatically truncated, cast to correct type if necessary
+    /**
+     * Get the value of the number, automatically truncated
+     * @return the value of the number, cast to correct type if necessary
+     */
     uint64_t get();
-    // get the value of the number, placed into a uint8_t array, must be at least this->totalBytes long
-    // - arr: the array to place the number into
+    /**
+     * Get the value of the number, placed into a uint8_t array
+     * @param arr the array to place the number into, must be as long as the number of bytes in this number (check totalBytes)
+     * @return whether the number was retrieved correctly
+     */
     bool get(uint8_t *arr);
 };
 
