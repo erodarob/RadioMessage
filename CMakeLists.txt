@@ -1,7 +1,7 @@
 
 set(LIB_DIR ${CMAKE_CURRENT_LIST_DIR}/src)
 
-add_library(Message STATIC ${LIB_DIR}/Message.cpp 
+add_library(RadioMessage STATIC ${LIB_DIR}/Message.cpp 
     ${LIB_DIR}/Message/GSMessage.cpp 
     ${LIB_DIR}/APRS/APRSCmd.cpp 
     ${LIB_DIR}/APRS/APRSData.cpp 
@@ -17,4 +17,4 @@ add_library(Message STATIC ${LIB_DIR}/Message.cpp
     ${LIB_DIR}/Wrapper/GSWrapper.cpp
     ${LIB_DIR}/Wrapper/SEWrapper.cpp
     ${LIB_DIR}/Wrapper/GSMWrapper.cpp)
-target_include_directories(Message PUBLIC ${LIB_DIR})
+target_include_directories(RadioMessage PUBLIC ${LIB_DIR})
